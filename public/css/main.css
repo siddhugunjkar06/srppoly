@@ -205,7 +205,7 @@ section { padding: 90px 0; }
 .faculty-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 24px; }
 .faculty-card { background: var(--light); border-radius: 18px; padding: 28px 20px; text-align: center; border: 1px solid transparent; transition: all .3s; }
 .faculty-card:hover { border-color: var(--accent); background: var(--white); transform: translateY(-4px); box-shadow: 0 16px 40px rgba(10,22,40,.1); }
-.faculty-avatar { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 14px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; border: 3px solid var(--accent); }
+.faculty-avatar { width: 120px; height: 120px; border-radius: 50%; margin: 0 auto 14px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; border: 3px solid var(--accent); }
 .faculty-info h4 { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
 .faculty-dept { font-size: .78rem; color: var(--accent); font-weight: 600; margin-bottom: 4px; font-family: 'Space Mono', monospace; }
 .faculty-exp { font-size: .78rem; color: var(--gray); margin-bottom: 10px; }
