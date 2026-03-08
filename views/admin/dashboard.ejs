@@ -1,0 +1,168 @@
+<%- include('layout-top') %>
+
+<div class="admin-page-header">
+  <h1>Dashboard</h1>
+  <p>Overview of SRPP website activity</p>
+</div>
+
+<!-- Stats Cards -->
+<div class="admin-stats-grid">
+  <div class="admin-stat-card">
+    <div class="stat-icon" style="background:rgba(26,58,107,.1);color:var(--blue);">🎓</div>
+    <div>
+      <div class="stat-number"><%= stats.totalEnquiries || 0 %></div>
+      <div class="stat-label">Total Enquiries</div>
+    </div>
+  </div>
+  <div class="admin-stat-card">
+    <div class="stat-icon" style="background:rgba(212,168,67,.1);color:var(--accent);">⭐</div>
+    <div>
+      <div class="stat-number"><%= stats.newEnquiries || 0 %></div>
+      <div class="stat-label">New Enquiries</div>
+    </div>
+  </div>
+  <div class="admin-stat-card">
+    <div class="stat-icon" style="background:rgba(16,185,129,.1);color:#059669;">✉️</div>
+    <div>
+      <div class="stat-number"><%= stats.unreadContacts || 0 %></div>
+      <div class="stat-label">Unread Messages</div>
+    </div>
+  </div>
+  <div class="admin-stat-card">
+    <div class="stat-icon" style="background:rgba(139,92,246,.1);color:#7c3aed;">📋</div>
+    <div>
+      <div class="stat-number"><%= stats.totalNotices || 0 %></div>
+      <div class="stat-label">Active Notices</div>
+    </div>
+  </div>
+  <div class="admin-stat-card">
+    <div class="stat-icon" style="background:rgba(20,184,166,.1);color:#0d9488;">👨‍🏫</div>
+    <div>
+      <div class="stat-number"><%= stats.totalFaculty || 0 %></div>
+      <div class="stat-label">Faculty Members</div>
+    </div>
+  </div>
+  <div class="admin-stat-card">
+    <div class="stat-icon" style="background:rgba(245,158,11,.1);color:#d97706;">🖼️</div>
+    <div>
+      <div class="stat-number"><%= stats.totalGallery || 0 %></div>
+      <div class="stat-label">Gallery Photos</div>
+    </div>
+  </div>
+  <div class="admin-stat-card">
+    <div class="stat-icon" style="background:rgba(99,102,241,.1);color:#4f46e5;">⚖️</div>
+    <div>
+      <div class="stat-number"><%= stats.totalGrievances || 0 %></div>
+      <div class="stat-label">Grievance Cells</div>
+    </div>
+  </div>
+  <div class="admin-stat-card">
+    <div class="stat-icon" style="background:rgba(16,185,129,.1);color:#059669;">📚</div>
+    <div>
+      <div class="stat-number"><%= stats.totalSyllabus || 0 %></div>
+      <div class="stat-label">Syllabus Docs</div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="admin-section" style="margin-bottom:28px;">
+  <h2 class="admin-section-title">Quick Actions</h2>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;">
+    <a href="/admin/notices/new" class="admin-btn admin-btn-primary">+ New Notice</a>
+    <a href="/admin/gallery/new" class="admin-btn admin-btn-primary">+ Upload Photos</a>
+    <a href="/admin/enquiries" class="admin-btn admin-btn-secondary">View Enquiries</a>
+    <a href="/admin/contacts" class="admin-btn admin-btn-secondary">View Messages</a>
+  </div>
+</div>
+
+<!-- Recent Enquiries -->
+<div class="admin-section">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <h2 class="admin-section-title" style="margin-bottom:0;">Recent Enquiries</h2>
+    <a href="/admin/enquiries" style="font-size:.82rem;color:var(--blue);text-decoration:none;">View all →</a>
+  </div>
+  <div class="admin-table-wrap">
+    <table class="admin-table">
+      <thead><tr><th>Name</th><th>Email</th><th>Department</th><th>Status</th><th>Date</th></tr></thead>
+      <tbody>
+        <% if (recentEnquiries && recentEnquiries.length > 0) { %>
+          <% recentEnquiries.forEach(e => { %>
+            <tr>
+              <td><strong><%= e.firstName %> <%= e.lastName || '' %></strong></td>
+              <td><%= e.email %></td>
+              <td><%= e.department %></td>
+              <td><span class="status-badge status-<%= e.status.toLowerCase() %>"><%= e.status %></span></td>
+              <td><%= new Date(e.createdAt).toLocaleDateString('en-IN') %></td>
+            </tr>
+          <% }) %>
+        <% } else { %>
+          <tr><td colspan="5" style="text-align:center;color:var(--gray);padding:24px;">No enquiries yet.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<!-- ── Account Settings ─────────────────────────────────────────────────── -->
+<div class="admin-section" style="margin-bottom:28px;">
+  <h2 class="admin-section-title">🔐 Account Settings</h2>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;">
+
+    <!-- Admin Info -->
+    <div style="background:#f8fafc;border-radius:14px;padding:20px;border:1px solid #e2e8f0;">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;">
+        <div style="width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;color:var(--accent);font-weight:900;font-family:'Playfair Display',serif;flex-shrink:0;">
+          <img src="/images/logobg.png" alt="SRPP Logo" style="height:60px;">
+        </div>
+        <div>
+          <div style="font-weight:700;color:var(--navy);font-size:.95rem;"><%= adminName %></div>
+          <div style="font-size:.75rem;color:var(--gray);font-family:'Space Mono',monospace;">Administrator</div>
+        </div>
+      </div>
+      <div style="font-size:.78rem;color:var(--gray);line-height:1.7;">
+        Logged in as <strong style="color:var(--navy);"><%= adminName %></strong><br>
+        Use the form to update your password anytime.
+      </div>
+    </div>
+
+    <!-- Change Password Form -->
+    <div>
+      <% if (error && error.length > 0) { %>
+        <div style="padding:10px 14px;background:#fee2e2;color:#991b1b;border-radius:10px;font-size:.82rem;margin-bottom:14px;border:1px solid #fca5a5;">⚠️ <%= error[0] %></div>
+      <% } %>
+      <% if (success && success.length > 0) { %>
+        <div style="padding:10px 14px;background:#d1fae5;color:#065f46;border-radius:10px;font-size:.82rem;margin-bottom:14px;border:1px solid #6ee7b7;">✅ <%= success[0] %></div>
+      <% } %>
+      <form action="/admin/change-password" method="POST" style="display:flex;flex-direction:column;gap:12px;">
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <label style="font-size:.78rem;font-weight:700;color:var(--navy);">Current Password</label>
+          <input type="password" name="currentPassword" placeholder="Enter current password" required
+            style="padding:10px 13px;border:2px solid #e2e8f0;border-radius:10px;font-size:.85rem;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;"
+            onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='#e2e8f0'">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <label style="font-size:.78rem;font-weight:700;color:var(--navy);">New Password</label>
+          <input type="password" name="newPassword" placeholder="Min 6 characters" required minlength="6"
+            style="padding:10px 13px;border:2px solid #e2e8f0;border-radius:10px;font-size:.85rem;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;"
+            onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='#e2e8f0'">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <label style="font-size:.78rem;font-weight:700;color:var(--navy);">Confirm New Password</label>
+          <input type="password" name="confirmNewPassword" placeholder="Repeat new password" required
+            style="padding:10px 13px;border:2px solid #e2e8f0;border-radius:10px;font-size:.85rem;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;"
+            onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='#e2e8f0'">
+        </div>
+        <button type="submit"
+          style="padding:11px 20px;background:linear-gradient(135deg,var(--accent),var(--gold));color:var(--navy);font-weight:700;font-size:.85rem;border:none;border-radius:10px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;align-self:flex-start;"
+          onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform=''">
+          🔐 Update Password
+        </button>
+      </form>
+    </div>
+
+  </div>
+</div>
+
+<%- include('layout-bottom') %>

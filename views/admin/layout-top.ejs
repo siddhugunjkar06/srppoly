@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title><%= title %></title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="admin-body">
+<div class="admin-layout">
+  <!-- Sidebar -->
+  <aside class="admin-sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon" style="width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--navy);font-weight:900;"><img src="/images/logobg.png" alt="SRPP Logo" style="height:60px;"></div>
+      <div>
+        <div style="font-family:'Playfair Display',serif;font-size:.9rem;color:white;font-weight:700;">SRPP Admin</div>
+        <div style="font-size:.65rem;color:rgba(255,255,255,.4);font-family:'Space Mono',monospace;">Welcome, <%= adminName %></div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/admin/dashboard" class="sidebar-link <%= currentPath === '/admin/dashboard' ? 'active' : '' %>">📊 Dashboard</a>
+      <a href="/admin/enquiries" class="sidebar-link <%= currentPath === '/admin/enquiries' ? 'active' : '' %>">🎓 Enquiries</a>
+      <a href="/admin/contacts" class="sidebar-link <%= currentPath === '/admin/contacts' ? 'active' : '' %>">✉️ Contact Messages</a>
+      <a href="/admin/notices" class="sidebar-link <%= currentPath.startsWith('/admin/notices') ? 'active' : '' %>">📋 Notices</a>
+      <a href="/admin/faculty" class="sidebar-link <%= currentPath.startsWith('/admin/faculty') ? 'active' : '' %>">👨‍🏫 Faculty</a>
+      <a href="/admin/gallery" class="sidebar-link <%= currentPath.startsWith('/admin/gallery') ? 'active' : '' %>">🖼️ Gallery</a>
+      <a href="/admin/grievances" class="sidebar-link <%= currentPath.startsWith('/admin/grievances') ? 'active' : '' %>">⚖️ Grievances</a>
+      <a href="/admin/syllabus"   class="sidebar-link <%= currentPath.startsWith('/admin/syllabus')   ? 'active' : '' %>">📚 Syllabus</a>
+      <a href="/admin/lab-manuals" class="sidebar-link <%= currentPath.startsWith('/admin/lab-manuals') ? 'active' : '' %>">🔬 Lab Manuals</a>
+      <hr style="border:none;border-top:1px solid rgba(255,255,255,.1);margin:12px 0;">
+      <a href="/" class="sidebar-link">🌐 View Website</a>
+      <a href="/admin/logout" class="sidebar-link" style="color:rgba(255,100,100,.7);">🚪 Logout</a>
+    </nav>
+  </aside>
+  <!-- Main Content -->
+  <main class="admin-main">
+    <% if (success && success.length > 0) { %>
+      <div class="admin-flash admin-flash-success">✅ <%= success[0] %></div>
+    <% } %>
+    <% if (error && error.length > 0) { %>
+      <div class="admin-flash admin-flash-error">⚠️ <%= error[0] %></div>
+    <% } %>

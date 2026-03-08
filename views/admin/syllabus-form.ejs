@@ -1,0 +1,270 @@
+<%- include('layout-top') %>
+
+<div class="admin-page-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;">
+  <div>
+    <h1><%= doc ? '✏️ Edit Document' : '📤 Upload Syllabus' %></h1>
+    <p><%= doc ? `Editing: ${doc.type} — Sem ${doc.semester} — ${doc.department}` : 'Upload MSBTE Curriculum PDF for a semester' %></p>
+  </div>
+  <a href="/admin/syllabus" class="admin-btn admin-btn-secondary">← Back to Syllabus</a>
+</div>
+
+<div class="syf-layout">
+
+  <form
+    action="<%= doc ? `/admin/syllabus/${doc._id}?_method=PUT` : '/admin/syllabus' %>"
+    method="POST"
+    enctype="multipart/form-data"
+    id="sylForm"
+  >
+
+    <!-- ── CLASSIFICATION ── -->
+    <div class="admin-section">
+      <h2 class="admin-section-title">🗂️ Classification</h2>
+      <div class="syf-grid">
+
+        <div class="syf-field">
+          <label>Department <span class="req">*</span></label>
+          <select name="department" id="deptSelect" required>
+            <option value="">Select Department</option>
+            <% DEPTS.forEach(d => { %>
+              <option value="<%= d %>"
+                <%= (doc && doc.department === d) || prefillDept === d ? 'selected' : '' %>>
+                <%= d %>
+              </option>
+            <% }) %>
+          </select>
+        </div>
+
+        <div class="syf-field">
+          <label>Semester <span class="req">*</span></label>
+          <select name="semester" id="semSelect" required>
+            <option value="">Select Semester</option>
+            <% SEMESTERS.forEach(s => { %>
+              <option value="<%= s %>"
+                <%= (doc && doc.semester === s) || parseInt(prefillSem) === s ? 'selected' : '' %>>
+                Semester <%= s %> <% if(s<=2){ %>(1st Year)<% } else if(s<=4){ %>(2nd Year)<% } else { %>(3rd Year)<% } %>
+              </option>
+            <% }) %>
+          </select>
+        </div>
+
+        <div class="syf-field">
+          <label>Document Type <span class="req">*</span></label>
+          <input type="hidden" name="type" value="MSBTE Curriculum">
+          <div class="syf-type-label-display">📋 MSBTE Curriculum</div>
+        </div>
+
+        <div class="syf-field">
+          <label>Academic Year <span style="color:var(--gray);font-weight:400;">(optional)</span></label>
+          <input type="text" name="academicYear" placeholder="e.g. 2023-24"
+            value="<%= doc ? (doc.academicYear || '') : '' %>">
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── DETAILS ── -->
+    <div class="admin-section">
+      <h2 class="admin-section-title">📝 Document Details</h2>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+
+        <div class="syf-field">
+          <label>Document Title <span class="req">*</span></label>
+          <input type="text" name="title" id="titleInput"
+            placeholder="e.g. Electrical Engineering Sem 1 MSBTE Curriculum"
+            value="<%= doc ? doc.title : '' %>" required>
+          <span class="syf-hint">Auto-generated title will appear if left as-is after selecting dept/sem/type</span>
+        </div>
+
+        <div class="syf-field">
+          <label>Description <span style="color:var(--gray);font-weight:400;">(optional)</span></label>
+          <textarea name="description" rows="2"
+            placeholder="Optional notes about this document..."><%= doc ? (doc.description || '') : '' %></textarea>
+        </div>
+
+        <div class="syf-field">
+          <label>Visibility</label>
+          <select name="isActive">
+            <option value="true"  <%= !doc || doc.isActive  ? 'selected' : '' %>>✅ Active — Visible to students</option>
+            <option value="false" <%= doc && !doc.isActive  ? 'selected' : '' %>>⏸ Hidden</option>
+          </select>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── PDF UPLOAD ── -->
+    <div class="admin-section">
+      <h2 class="admin-section-title">📄 PDF Document</h2>
+
+      <% if (doc && (doc.pdfUrl || doc.pdfPublicId)) { %>
+        <div class="syf-pdf-current">
+          <div style="font-size:2rem;">📄</div>
+          <div style="flex:1;">
+            <div class="syf-pdf-name"><%= doc.pdfName || 'Uploaded Document' %></div>
+            <div style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;">
+              <a href="/download/syllabus/<%= doc._id %>" target="_blank" class="syf-pdf-view">👁️ View / Download PDF</a>
+              <button type="button" class="syf-pdf-remove" onclick="if(confirm('Remove this PDF?')) document.getElementById('sylRemoveForm').submit()">🗑️ Remove</button>
+            </div>
+            <p class="syf-hint" style="margin-top:6px;">Upload a new PDF below to replace the current one.</p>
+          </div>
+        </div>
+      <% } %>
+
+      <div class="syf-dropzone" id="sylDropzone" onclick="document.getElementById('pdfInput').click()">
+        <div id="dropHintInner">
+          <div style="font-size:2.5rem;margin-bottom:10px;">📂</div>
+          <p class="syf-drop-text"><%= doc && doc.pdfUrl ? 'Drop new PDF to replace' : 'Click or drag PDF here' %></p>
+          <p class="syf-drop-sub">PDF only · Max 20MB</p>
+        </div>
+        <div id="pdfSelectedInfo" style="display:none;padding:16px 20px;display:none;align-items:center;gap:14px;width:100%;">
+          <span style="font-size:2rem;">📄</span>
+          <div>
+            <div id="pdfFileName" style="font-size:.88rem;font-weight:700;color:var(--navy);"></div>
+            <div id="pdfFileSize" style="font-size:.72rem;color:var(--gray);margin-top:2px;"></div>
+          </div>
+          <button type="button" onclick="clearPDF(event)" style="margin-left:auto;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.2);color:#dc2626;border-radius:8px;padding:5px 12px;font-size:.78rem;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700;">✕ Clear</button>
+        </div>
+      </div>
+      <input type="file" name="pdf" id="pdfInput" accept="application/pdf" style="display:none;">
+    </div>
+
+    <!-- SUBMIT -->
+    <div class="syf-actions">
+      <button type="submit" class="admin-btn admin-btn-primary syf-submit" id="submitBtn">
+        <%= doc ? '✅ Update Document' : '📤 Upload Document' %>
+      </button>
+      <a href="/admin/syllabus" class="admin-btn admin-btn-secondary">Cancel</a>
+      <% if (doc) { %>
+        <button type="button" class="admin-btn admin-btn-danger" style="margin-left:auto;"
+          onclick="if(confirm('Delete this record permanently?')) document.getElementById('deleteForm_doc').submit()">
+          🗑️ Delete
+        </button>
+      <% } %>
+    </div>
+
+  
+</form>
+
+<% if (doc && (doc.pdfUrl || doc.pdfPublicId)) { %>
+<form id="sylRemoveForm" action="/admin/syllabus/<%= doc._id %>/remove-pdf" method="POST"></form>
+<% } %>
+
+<% if (doc) { %>
+<form id="deleteForm_doc"
+      action="/admin/syllabus/<%= doc._id %>?_method=DELETE"
+      method="POST">
+</form>
+<% } %>
+</div>
+
+<style>
+.syf-layout { display:flex; flex-direction:column; gap:20px; max-width:760px; }
+.syf-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.syf-field { display:flex; flex-direction:column; gap:6px; }
+.syf-field label { font-size:.82rem; font-weight:700; color:var(--navy); }
+.syf-field input, .syf-field select, .syf-field textarea {
+  padding:10px 14px; border:2px solid #e2e8f0; border-radius:10px;
+  font-size:.9rem; font-family:'DM Sans',sans-serif; color:var(--text);
+  transition:border-color .2s; outline:none; background:white;
+}
+.syf-field input:focus, .syf-field select:focus, .syf-field textarea:focus { border-color:var(--accent); }
+.syf-field textarea { resize:vertical; }
+.syf-hint { font-size:.72rem; color:var(--gray); }
+.req { color:#dc2626; }
+
+/* Type radio options */
+.syf-type-label-display { font-size:.92rem; font-weight:700; color:var(--navy); padding:10px 14px; background:#f8fafc; border:2px solid #e2e8f0; border-radius:10px; display:inline-block; }
+.syf-type-label { padding:8px 16px; border:2px solid #e2e8f0; border-radius:10px; font-size:.85rem; font-weight:600; color:var(--navy); transition:all .2s; cursor:pointer; display:flex; align-items:center; gap:6px; }
+.syf-type-option input:checked + .syf-type-label { background:rgba(212,168,67,.1); border-color:var(--accent); color:var(--navy); }
+
+/* PDF current */
+.syf-pdf-current { display:flex; gap:14px; align-items:flex-start; background:rgba(26,58,107,.04); border:1px solid rgba(26,58,107,.12); border-radius:12px; padding:16px 20px; margin-bottom:14px; }
+.syf-pdf-name { font-family:'Playfair Display',serif; font-size:.9rem; font-weight:700; color:var(--navy); }
+.syf-pdf-view   { padding:5px 12px; background:var(--blue); color:white; border-radius:8px; font-size:.78rem; font-weight:700; text-decoration:none; }
+.syf-pdf-remove { padding:5px 12px; background:rgba(220,38,38,.08); border:1px solid rgba(220,38,38,.2); color:#dc2626; border-radius:8px; font-size:.78rem; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; }
+
+/* Dropzone */
+.syf-dropzone { border:2px dashed #cbd5e1; border-radius:14px; min-height:130px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .2s; background:#fafbfc; overflow:hidden; }
+.syf-dropzone:hover { border-color:var(--accent); background:rgba(212,168,67,.03); }
+#dropHintInner { text-align:center; padding:20px; pointer-events:none; }
+.syf-drop-text { font-size:.9rem; font-weight:600; color:var(--navy); margin:0 0 4px; }
+.syf-drop-sub  { font-size:.75rem; color:var(--gray); margin:0; }
+
+/* Actions */
+.syf-actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; background:white; padding:20px; border-radius:14px; border:1px solid #e2e8f0; }
+.syf-submit { padding:12px 28px !important; }
+
+@media(max-width:600px) { .syf-grid { grid-template-columns:1fr; } }
+</style>
+
+<script>
+// ── PDF file picker ──────────────────────────────────────────────────────
+const pdfInput    = document.getElementById('pdfInput');
+const dropHint    = document.getElementById('dropHintInner');
+const selectedDiv = document.getElementById('pdfSelectedInfo');
+const nameEl      = document.getElementById('pdfFileName');
+const sizeEl      = document.getElementById('pdfFileSize');
+
+pdfInput.addEventListener('change', () => {
+  const file = pdfInput.files[0];
+  if (!file) return;
+  if (file.size > 20 * 1024 * 1024) {
+    alert('File too large. Maximum size is 20MB.');
+    pdfInput.value = '';
+    return;
+  }
+  nameEl.textContent = file.name;
+  sizeEl.textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+  dropHint.style.display    = 'none';
+  selectedDiv.style.display = 'flex';
+});
+
+function clearPDF(e) {
+  e.stopPropagation();
+  pdfInput.value = '';
+  dropHint.style.display    = 'block';
+  selectedDiv.style.display = 'none';
+}
+
+// ── Drag & drop ──────────────────────────────────────────────────────────
+const zone = document.getElementById('sylDropzone');
+['dragenter','dragover'].forEach(ev => zone.addEventListener(ev, e => { e.preventDefault(); zone.style.borderColor='var(--accent)'; }));
+['dragleave','drop'].forEach(ev  => zone.addEventListener(ev, e => { e.preventDefault(); zone.style.borderColor=''; }));
+zone.addEventListener('drop', e => {
+  const file = e.dataTransfer.files[0];
+  if (file && file.type === 'application/pdf') {
+    const dt = new DataTransfer(); dt.items.add(file); pdfInput.files = dt.files;
+    pdfInput.dispatchEvent(new Event('change'));
+  } else { alert('Please drop a PDF file only.'); }
+});
+
+// ── Auto-generate title ──────────────────────────────────────────────────
+const deptSel  = document.getElementById('deptSelect');
+const semSel   = document.getElementById('semSelect');
+const titleInp = document.getElementById('titleInput');
+
+function autoTitle() {
+  const d = deptSel.value;
+  const s = semSel.value;
+  if (d && s && !titleInp.dataset.userEdited) {
+    titleInp.value = `${d} — Semester ${s} MSBTE Curriculum`;
+  }
+}
+titleInp.addEventListener('input', () => { titleInp.dataset.userEdited = 'true'; });
+deptSel.addEventListener('change', autoTitle);
+semSel.addEventListener('change', autoTitle);
+
+// Pre-fill if prefill params and no doc
+<% if (!doc && (prefillDept || prefillSem || prefillType)) { %>
+  if (deptSel.value && semSel.value) autoTitle();
+<% } %>
+
+// ── Loading on submit ────────────────────────────────────────────────────
+document.getElementById('sylForm').addEventListener('submit', () => {
+  const btn = document.getElementById('submitBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Uploading…'; }
+});
+</script>
+
+<%- include('layout-bottom') %>

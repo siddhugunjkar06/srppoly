@@ -1,0 +1,68 @@
+<%- include('layout-top') %>
+
+<div class="admin-page-header">
+  <h1>Admission Enquiries</h1>
+  <p>All admission enquiries submitted through the website</p>
+</div>
+
+<div class="admin-section">
+  <div class="admin-table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Name</th>
+          <th>Contact</th>
+          <th>Department</th>
+          <th>Marks</th>
+          <th>Category</th>
+          <th>Status</th>
+          <th>Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (enquiries && enquiries.length > 0) { %>
+          <% enquiries.forEach((e, i) => { %>
+            <tr>
+              <td><%= i + 1 %></td>
+              <td>
+                <strong><%= e.firstName %> <%= e.lastName || '' %></strong>
+                <% if (e.message) { %>
+                  <div style="font-size:.75rem;color:var(--gray);margin-top:2px;">"<%= e.message.substring(0,50) %>..."</div>
+                <% } %>
+              </td>
+              <td>
+                <a href="mailto:<%= e.email %>" style="color:var(--blue);text-decoration:none;display:block;"><%= e.email %></a>
+                <a href="tel:<%= e.phone %>" style="color:var(--gray);text-decoration:none;font-size:.82rem;"><%= e.phone %></a>
+              </td>
+              <td><%= e.department %></td>
+              <td><%= e.marks || '—' %></td>
+              <td><%= e.category || 'General' %></td>
+              <td>
+                <form action="/admin/enquiries/<%= e._id %>/status" method="POST" style="display:inline;">
+                  <select name="status" onchange="this.form.submit()" class="status-select status-<%= e.status.toLowerCase() %>">
+                    <option <%= e.status === 'New' ? 'selected' : '' %>>New</option>
+                    <option <%= e.status === 'Contacted' ? 'selected' : '' %>>Contacted</option>
+                    <option <%= e.status === 'Enrolled' ? 'selected' : '' %>>Enrolled</option>
+                    <option <%= e.status === 'Rejected' ? 'selected' : '' %>>Rejected</option>
+                  </select>
+                </form>
+              </td>
+              <td><%= new Date(e.createdAt).toLocaleDateString('en-IN') %></td>
+              <td>
+                <form action="/admin/enquiries/<%= e._id %>?_method=DELETE" method="POST" onsubmit="return confirm('Delete this enquiry?')">
+                  <button type="submit" class="admin-btn admin-btn-danger admin-btn-sm">Delete</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        <% } else { %>
+          <tr><td colspan="9" style="text-align:center;color:var(--gray);padding:40px;">No enquiries yet. They'll appear here when students apply.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('layout-bottom') %>

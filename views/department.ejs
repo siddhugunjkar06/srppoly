@@ -1,0 +1,334 @@
+<%- include('partials/head') %>
+<%- include('partials/navbar') %>
+
+<!-- ── HERO ── -->
+<section class="dp-hero" style="background:<%= cfg.color %>;">
+  <div class="dp-hero-glow"></div>
+  <div class="section-inner">
+    <div class="dp-hero-inner">
+      <div>
+        <div class="dp-hero-icon"><%= cfg.icon %></div>
+        <div class="section-label" style="color:rgba(255,255,255,.5);margin-bottom:10px;">Diploma Program · 3 Years · MSBTE Affiliated</div>
+        <h1 class="dp-hero-title"><%= cfg.name %></h1>
+        <p class="dp-hero-desc"><%= cfg.description %></p>
+        <div class="dp-hero-chips">
+          <span class="dp-chip">🪑 <%= cfg.seats %> Seats</span>
+          <span class="dp-chip">📅 6 Semesters</span>
+          <span class="dp-chip">🏛️ AICTE Approved</span>
+          <span class="dp-chip">📋 MSBTE Affiliated</span>
+        </div>
+        <div class="dp-hero-btns">
+          <a href="/#admission" class="dp-btn-apply">🎓 Apply Now →</a>
+          <a href="#syllabus"   class="dp-btn-outline">📚 View Syllabus ↓</a>
+        </div>
+      </div>
+      <div class="dp-hero-card">
+        <div class="dp-card-title">Key Subjects</div>
+        <% cfg.subjects.split(',').forEach(sub => { %>
+          <div class="dp-card-subject"><span class="dp-subj-dot"></span><%= sub.trim() %></div>
+        <% }) %>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── BREADCRUMB ── -->
+<div class="dp-breadcrumb">
+  <div class="section-inner">
+    <a href="/">Home</a><span>›</span>
+    <a href="/#departments">Departments</a><span>›</span>
+    <span><%= cfg.name %></span>
+  </div>
+</div>
+
+<!-- ── SYLLABUS SECTION ── -->
+<section id="syllabus" class="dp-section" style="background:var(--light);">
+  <div class="section-inner">
+
+    <div style="text-align:center;margin-bottom:44px;">
+      <div class="section-label" style="justify-content:center;">Academic Resources</div>
+      <h2 class="section-title">Syllabus &amp; Lab Manuals</h2>
+      <p class="section-sub" style="margin:0 auto;">Download the official MSBTE Curriculum and Laboratory Manuals for each semester. Documents are updated as per the latest MSBTE guidelines.</p>
+    </div>
+
+    <!-- Year Tabs -->
+    <div class="dp-year-tabs">
+      <button class="dp-year-tab active" onclick="showYear('all', this)">📚 All Semesters</button>
+      <button class="dp-year-tab" onclick="showYear('year1', this)">1st Year <span class="dp-year-sub">(Sem 1 &amp; 2)</span></button>
+      <button class="dp-year-tab" onclick="showYear('year2', this)">2nd Year <span class="dp-year-sub">(Sem 3 &amp; 4)</span></button>
+      <button class="dp-year-tab" onclick="showYear('year3', this)">3rd Year <span class="dp-year-sub">(Sem 5 &amp; 6)</span></button>
+    </div>
+
+    <!-- Semester Cards -->
+    <div class="dp-semesters">
+      <% semesters.forEach(sem => {
+        const semData  = bySemester[sem] || {};
+        const curriculum = semData['MSBTE Curriculum'];
+        const labManual  = semData['Lab Manual'];
+        const yearClass  = sem <= 2 ? 'year1' : sem <= 4 ? 'year2' : 'year3';
+        const yearLabel  = sem <= 2 ? '1st Year' : sem <= 4 ? '2nd Year' : '3rd Year';
+        const hasDocs    = curriculum || labManual;
+      %>
+        <div class="dp-sem-card fade-in dp-year-<%= yearClass %>">
+
+          <!-- Card Header -->
+          <div class="dp-sem-header">
+            <div class="dp-sem-number">
+              <span class="dp-sem-num">Sem</span>
+              <span class="dp-sem-dig"><%= sem %></span>
+            </div>
+            <div>
+              <div class="dp-sem-title">Semester <%= sem %></div>
+              <div class="dp-sem-year"><%= yearLabel %></div>
+            </div>
+            <% if (curriculum && curriculum.academicYear) { %>
+              <span class="dp-sem-ay">📅 <%= curriculum.academicYear %></span>
+            <% } %>
+          </div>
+
+          <!-- Documents -->
+          <div class="dp-sem-docs">
+
+            <!-- MSBTE Curriculum -->
+            <div class="dp-doc-row dp-doc-curriculum">
+              <div class="dp-doc-icon">📋</div>
+              <div class="dp-doc-info">
+                <div class="dp-doc-type">MSBTE Curriculum</div>
+                <% if (curriculum) { %>
+                  <div class="dp-doc-title"><%= curriculum.title %></div>
+                  <% if (curriculum.description) { %>
+                    <div class="dp-doc-desc"><%= curriculum.description %></div>
+                  <% } %>
+                <% } else { %>
+                  <div class="dp-doc-title dp-doc-na">Coming Soon</div>
+                <% } %>
+              </div>
+              <% if (curriculum && curriculum.pdfUrl) { %>
+                <a href="/download/syllabus/<%= curriculum._id %>"
+                   class="dp-dl-btn dp-dl-curriculum">
+                  <span>⬇</span> Download
+                </a>
+              <% } else { %>
+                <span class="dp-dl-na">—</span>
+              <% } %>
+            </div>
+
+            <!-- Lab Manual — links to detail page -->
+            <div class="dp-doc-row dp-doc-labmanual" id="lab-sem-<%= sem %>">
+              <div class="dp-doc-icon">🔬</div>
+              <div class="dp-doc-info">
+                <div class="dp-doc-type">Lab Manual</div>
+                <% if (labManualCounts[sem] && labManualCounts[sem] > 0) { %>
+                  <div class="dp-doc-title"><%= labManualCounts[sem] %> Subject<%= labManualCounts[sem]!==1?'s':'' %> Available</div>
+                  <div class="dp-doc-desc">Subject-wise lab manuals with individual PDF downloads</div>
+                <% } else { %>
+                  <div class="dp-doc-title dp-doc-na">Coming Soon</div>
+                <% } %>
+              </div>
+              <a href="/departments/<%= slug %>/lab-manuals/<%= sem %>" class="dp-dl-btn dp-dl-labmanual">
+                <span>→</span> View Details
+              </a>
+            </div>
+
+          </div>
+
+        </div>
+      <% }) %>
+    </div>
+
+    <!-- MSBTE Info Box -->
+    <div class="dp-info-box">
+      <span style="font-size:1.6rem;flex-shrink:0;">ℹ️</span>
+      <div>
+        <strong>About MSBTE Curriculum</strong>
+        <p>All syllabi are prescribed by the Maharashtra State Board of Technical Education (MSBTE). For the latest updates, also visit <a href="https://msbte.org.in" target="_blank">msbte.org.in</a>. Documents are updated each academic year.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── FACULTY SECTION ── -->
+<% if (faculty && faculty.length > 0) { %>
+<section class="dp-section" style="background:var(--white);">
+  <div class="section-inner">
+    <div style="text-align:center;margin-bottom:40px;">
+      <div class="section-label" style="justify-content:center;">Meet the Team</div>
+      <h2 class="section-title"><%= cfg.name %> Faculty</h2>
+    </div>
+    <div class="faculty-grid">
+      <% faculty.forEach(member => { %>
+        <div class="faculty-card fade-in">
+          <% if (member.imageUrl) { %>
+            <img src="<%= member.imageUrl %>" alt="<%= member.name %>" class="faculty-avatar" style="object-fit:cover;border:3px solid var(--accent);">
+          <% } else { %>
+            <div class="faculty-avatar" style="background:<%=cfg.color%>;font-size:1.8rem;display:flex;align-items:center;justify-content:center;">
+              <%= member.name.charAt(0) %>
+            </div>
+          <% } %>
+          <div class="faculty-info">
+            <h4><%= member.name %></h4>
+            <p class="faculty-dept"><%= member.designation %></p>
+            <p class="faculty-exp"><%= member.qualification %><%= member.experience ? ' · '+member.experience : '' %></p>
+            <% if (member.specialization) { %>
+              <div class="faculty-tags">
+                <% member.specialization.split(',').slice(0,2).forEach(s => { %>
+                  <span><%= s.trim() %></span>
+                <% }) %>
+              </div>
+            <% } %>
+            <% if (member.isHOD) { %>
+              <span style="display:inline-block;margin-top:6px;padding:2px 10px;background:linear-gradient(135deg,var(--accent),var(--gold));border-radius:50px;font-size:.62rem;font-weight:900;color:var(--navy);font-family:'Space Mono',monospace;">HEAD OF DEPT</span>
+            <% } %>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+</section>
+<% } %>
+
+<!-- ── OTHER DEPTS ── -->
+<section class="dp-section" style="background:var(--light);padding:48px 0;">
+  <div class="section-inner">
+    <div style="text-align:center;margin-bottom:28px;">
+      <h3 style="font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--navy);">Explore Other Departments</h3>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;">
+      <%
+        const otherDepts = {
+          'electrical-engineering':   { name:'Electrical Engineering',      icon:'⚡', color:'#1a3a6b' },
+          'computer-engineering':     { name:'Computer Engineering',        icon:'💻', color:'#1a5c1a' },
+          'ai-machine-learning':      { name:'AI & Machine Learning',       icon:'🤖', color:'#5c1a5c' },
+          'electronics-communication':{ name:'Electronics & Communication', icon:'📡', color:'#5c3a1a' },
+        };
+      %>
+      <% Object.entries(otherDepts).forEach(([s, d]) => { if (s !== slug) { %>
+        <a href="/departments/<%= s %>" class="dp-other-card">
+          <span class="dp-other-icon" style="background:<%= d.color %>"><%= d.icon %></span>
+          <span class="dp-other-name"><%= d.name %></span>
+          <span class="dp-other-arrow">→</span>
+        </a>
+      <% } }) %>
+    </div>
+  </div>
+</section>
+
+<%- include('partials/footer') %>
+
+<style>
+/* ══ HERO ══════════════════════════════════════════════════════════ */
+.dp-hero { padding:100px 0 70px; position:relative; overflow:hidden; }
+.dp-hero-glow { position:absolute; top:-80px; right:-80px; width:500px; height:500px; border-radius:50%; background:radial-gradient(circle,rgba(255,255,255,.06) 0%,transparent 70%); pointer-events:none; }
+.dp-hero-inner { display:grid; grid-template-columns:1fr auto; gap:40px; align-items:center; }
+.dp-hero-icon { font-size:3.5rem; margin-bottom:16px; }
+.dp-hero-title { font-family:'Playfair Display',serif; font-size:2.8rem; font-weight:900; color:white; line-height:1.15; margin-bottom:16px; }
+.dp-hero-desc { font-size:1rem; color:rgba(255,255,255,.75); line-height:1.8; max-width:560px; margin-bottom:20px; }
+.dp-hero-chips { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:24px; }
+.dp-chip { background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2); backdrop-filter:blur(4px); color:white; font-size:.75rem; font-weight:600; padding:5px 13px; border-radius:50px; }
+.dp-hero-btns { display:flex; gap:12px; flex-wrap:wrap; }
+.dp-btn-apply { display:inline-flex; align-items:center; gap:7px; padding:12px 24px; background:linear-gradient(135deg,var(--accent),var(--gold)); color:var(--navy); border-radius:50px; font-size:.9rem; font-weight:800; text-decoration:none; transition:all .25s; }
+.dp-btn-apply:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(212,168,67,.4); }
+.dp-btn-outline { display:inline-flex; align-items:center; gap:7px; padding:12px 24px; background:rgba(255,255,255,.1); border:2px solid rgba(255,255,255,.3); color:white; border-radius:50px; font-size:.9rem; font-weight:700; text-decoration:none; transition:all .25s; }
+.dp-btn-outline:hover { background:rgba(255,255,255,.2); }
+
+/* Hero card */
+.dp-hero-card { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.15); backdrop-filter:blur(8px); border-radius:20px; padding:24px; min-width:220px; max-width:260px; }
+.dp-card-title { font-family:'Space Mono',monospace; font-size:.65rem; font-weight:700; color:rgba(255,255,255,.5); text-transform:uppercase; letter-spacing:.08em; margin-bottom:14px; }
+.dp-card-subject { display:flex; align-items:center; gap:10px; padding:7px 0; border-bottom:1px solid rgba(255,255,255,.08); font-size:.82rem; color:rgba(255,255,255,.85); font-weight:500; }
+.dp-card-subject:last-child { border-bottom:none; }
+.dp-subj-dot { width:6px; height:6px; border-radius:50%; background:var(--accent); flex-shrink:0; }
+
+/* ══ BREADCRUMB ══ */
+.dp-breadcrumb { background:white; border-bottom:1px solid #e2e8f0; padding:12px 0; }
+.dp-breadcrumb .section-inner { display:flex; align-items:center; gap:8px; font-size:.82rem; color:var(--gray); flex-wrap:wrap; }
+.dp-breadcrumb a { color:var(--blue); text-decoration:none; }
+.dp-breadcrumb a:hover { color:var(--accent); }
+.dp-breadcrumb span:last-child { color:var(--navy); font-weight:600; }
+
+/* ══ SECTION ══ */
+.dp-section { padding:64px 0; }
+
+/* ══ YEAR TABS ══ */
+.dp-year-tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:28px; }
+.dp-year-tab { padding:9px 20px; background:white; border:1px solid #e2e8f0; border-radius:50px; font-size:.84rem; font-weight:600; cursor:pointer; transition:all .2s; color:var(--gray); font-family:'DM Sans',sans-serif; }
+.dp-year-tab:hover { background:#f1f5f9; border-color:#cbd5e1; color:var(--navy); }
+.dp-year-tab.active { background:var(--navy); color:var(--accent); border-color:var(--navy); }
+.dp-year-sub { font-size:.72rem; opacity:.7; }
+
+/* ══ SEMESTER CARDS ══ */
+.dp-semesters { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:18px; margin-bottom:28px; }
+
+.dp-sem-card { background:white; border-radius:18px; border:1px solid #e2e8f0; overflow:hidden; transition:all .3s; box-shadow:0 2px 12px rgba(10,22,40,.05); }
+.dp-sem-card:hover { border-color:var(--accent); box-shadow:0 8px 28px rgba(10,22,40,.1); transform:translateY(-2px); }
+
+.dp-sem-header { display:flex; align-items:center; gap:14px; padding:16px 20px; background:linear-gradient(135deg,var(--navy) 0%,#1a3a6b 100%); }
+.dp-sem-number { display:flex; flex-direction:column; align-items:center; background:rgba(212,168,67,.15); border:1px solid rgba(212,168,67,.3); border-radius:12px; padding:8px 14px; flex-shrink:0; }
+.dp-sem-num { font-family:'Space Mono',monospace; font-size:.55rem; color:var(--accent); text-transform:uppercase; letter-spacing:.1em; }
+.dp-sem-dig { font-family:'Playfair Display',serif; font-size:1.8rem; font-weight:900; color:var(--accent); line-height:1; }
+.dp-sem-title { font-family:'Playfair Display',serif; font-size:1rem; font-weight:700; color:white; }
+.dp-sem-year  { font-size:.72rem; color:rgba(255,255,255,.5); margin-top:2px; font-family:'Space Mono',monospace; }
+.dp-sem-ay    { margin-left:auto; font-size:.65rem; color:rgba(255,255,255,.5); font-family:'Space Mono',monospace; white-space:nowrap; }
+
+/* Document rows */
+.dp-sem-docs { padding:0; }
+.dp-doc-row { display:flex; align-items:center; gap:14px; padding:14px 18px; border-bottom:1px solid #f1f5f9; transition:background .15s; }
+.dp-doc-row:last-child { border-bottom:none; }
+.dp-doc-row:hover { background:#fdfcf8; }
+.dp-doc-icon { font-size:1.5rem; flex-shrink:0; }
+.dp-doc-info { flex:1; min-width:0; }
+.dp-doc-type  { font-family:'Space Mono',monospace; font-size:.62rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-bottom:3px; }
+.dp-doc-curriculum .dp-doc-type { color:#1e40af; }
+.dp-doc-labmanual  .dp-doc-type { color:#065f46; }
+.dp-doc-title { font-size:.82rem; font-weight:600; color:var(--navy); line-height:1.4; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.dp-doc-na    { color:#94a3b8; font-style:italic; font-weight:400; }
+.dp-doc-desc  { font-size:.72rem; color:var(--gray); margin-top:2px; }
+
+/* Download buttons */
+.dp-dl-btn {
+  display:inline-flex; align-items:center; gap:6px; flex-shrink:0;
+  padding:8px 16px; border-radius:50px; font-size:.78rem; font-weight:700;
+  text-decoration:none; transition:all .25s; white-space:nowrap;
+  font-family:'DM Sans',sans-serif; border:2px solid transparent;
+}
+.dp-dl-curriculum { background:linear-gradient(135deg,#1e40af,#1e3a8a); color:white; }
+.dp-dl-curriculum:hover { background:transparent; border-color:#1e40af; color:#1e40af; transform:translateY(-1px); box-shadow:0 4px 12px rgba(30,64,175,.2); }
+.dp-dl-labmanual  { background:linear-gradient(135deg,#065f46,#064e3b); color:white; }
+.dp-dl-labmanual:hover  { background:transparent; border-color:#065f46; color:#065f46; transform:translateY(-1px); box-shadow:0 4px 12px rgba(6,95,70,.2); }
+.dp-dl-na { font-size:.75rem; color:#cbd5e1; font-style:italic; flex-shrink:0; padding:0 8px; }
+
+/* ══ INFO BOX ══ */
+.dp-info-box { display:flex; gap:16px; align-items:flex-start; background:rgba(212,168,67,.07); border:1px solid rgba(212,168,67,.25); border-radius:14px; padding:20px 24px; }
+.dp-info-box strong { display:block; font-family:'Playfair Display',serif; font-size:.95rem; color:var(--navy); margin-bottom:5px; }
+.dp-info-box p { font-size:.82rem; color:var(--gray); line-height:1.7; margin:0; }
+.dp-info-box a { color:var(--blue); font-weight:600; }
+
+/* ══ OTHER DEPTS ══ */
+.dp-other-card { display:flex; align-items:center; gap:12px; background:white; border:1px solid #e2e8f0; border-radius:14px; padding:16px 18px; text-decoration:none; transition:all .25s; }
+.dp-other-card:hover { border-color:var(--accent); box-shadow:0 4px 16px rgba(10,22,40,.08); transform:translateY(-1px); }
+.dp-other-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.3rem; flex-shrink:0; }
+.dp-other-name { font-size:.85rem; font-weight:600; color:var(--navy); flex:1; }
+.dp-other-arrow { color:var(--accent); font-weight:700; font-size:1rem; }
+
+/* ══ RESPONSIVE ══ */
+@media (max-width:900px) {
+  .dp-hero-inner { grid-template-columns:1fr; }
+  .dp-hero-card { display:none; }
+  .dp-hero-title { font-size:2rem; }
+}
+@media (max-width:600px) {
+  .dp-semesters { grid-template-columns:1fr; }
+  .dp-dl-btn { padding:6px 12px; font-size:.72rem; }
+}
+</style>
+
+<script>
+function showYear(year, btn) {
+  document.querySelectorAll('.dp-year-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.dp-sem-card').forEach(card => {
+    if (year === 'all') { card.style.display = 'flex'; card.style.flexDirection = 'column'; }
+    else { card.style.display = card.classList.contains('dp-year-' + year) ? 'flex' : 'none'; if (card.style.display === 'flex') card.style.flexDirection = 'column'; }
+  });
+}
+</script>

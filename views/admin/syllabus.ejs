@@ -1,0 +1,210 @@
+<%- include('layout-top') %>
+
+<%
+const DEPT_META = {
+  'Electrical Engineering':      { icon:'⚡', color:'#1a3a6b', slug:'electrical-engineering' },
+  'Computer Engineering':        { icon:'💻', color:'#1a5c1a', slug:'computer-engineering' },
+  'AI & Machine Learning':       { icon:'🤖', color:'#5c1a5c', slug:'ai-machine-learning' },
+  'Electronics & Communication': { icon:'📡', color:'#5c3a1a', slug:'electronics-communication' },
+};
+const activeDepts = activeDept === 'All' ? DEPTS : [activeDept];
+%>
+
+<div class="admin-page-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;">
+  <div>
+    <h1>📋 Syllabus</h1>
+    <p>Upload MSBTE Curriculum PDFs for each semester across all 4 departments</p>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <a href="/admin/syllabus/new" class="admin-btn admin-btn-primary">+ Upload Document</a>
+  </div>
+</div>
+
+<!-- Dept filter tabs -->
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px;">
+  <% ['All',...DEPTS].forEach(d => { %>
+    <a href="/admin/syllabus?dept=<%= encodeURIComponent(d) %>"
+       class="syl-tab <%= activeDept === d ? 'syl-tab-active' : '' %>">
+      <% if (DEPT_META[d]) { %><%= DEPT_META[d].icon %> <% } %>
+      <%= d === 'All' ? '🏛️ All Departments' : d.split(' ')[0] + ' ' + d.split(' ')[1] %>
+    </a>
+  <% }) %>
+</div>
+
+<!-- Progress summary -->
+<div class="syl-progress-bar-wrap">
+  <%
+    let totalSlots = 0, filled = 0;
+    activeDepts.forEach(d => {
+      SEMESTERS.forEach(s => {
+        SYL_TYPES.forEach(t => {
+          totalSlots++;
+          if (grouped[d] && grouped[d][s] && grouped[d][s][t]) filled++;
+        });
+      });
+    });
+    const pct = totalSlots ? Math.round((filled/totalSlots)*100) : 0;
+  %>
+  <div class="syl-progress-label">
+    <span>Upload Progress</span>
+    <span><strong style="color:var(--navy);"><%= filled %></strong> / <%= totalSlots %> documents uploaded (<%= pct %>%)</span>
+  </div>
+  <div class="syl-progress-track">
+    <div class="syl-progress-fill" style="width:<%= pct %>%"></div>
+  </div>
+</div>
+
+<!-- Per-department grids -->
+<% activeDepts.forEach(dept => {
+  const meta = DEPT_META[dept] || {};
+  const deptDocs = docs.filter(d => d.department === dept);
+%>
+<div class="syl-dept-section">
+
+  <!-- Dept Header -->
+  <div class="syl-dept-header">
+    <div class="syl-dept-icon" style="background:<%= meta.color || '#0a1628' %>">
+      <%= meta.icon || '📚' %>
+    </div>
+    <div>
+      <h2 class="syl-dept-name"><%= dept %></h2>
+      <p class="syl-dept-sub">
+        <%= deptDocs.filter(d=>d.pdfUrl).length %> PDFs uploaded &bull;
+        <a href="/departments/<%= meta.slug %>" target="_blank" style="color:var(--blue);">View Public Page ↗</a>
+      </p>
+    </div>
+    <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;">
+      <a href="/admin/lab-manuals?dept=<%= encodeURIComponent(dept) %>&sem=All"
+         class="admin-btn admin-btn-secondary admin-btn-sm">
+        🔬 View Lab Manuals
+      </a>
+      <a href="/admin/syllabus/new?dept=<%= encodeURIComponent(dept) %>"
+         class="admin-btn admin-btn-secondary admin-btn-sm">
+        + Add Curriculum
+      </a>
+    </div>
+  </div>
+
+  <!-- Semester matrix table -->
+  <div class="syl-matrix-wrap">
+    <table class="syl-matrix">
+      <thead>
+        <tr>
+          <th class="syl-th-sem">Semester</th>
+          <% SYL_TYPES.forEach(t => { %>
+            <th class="syl-th-type">
+              📋 MSBTE Curriculum
+            </th>
+          <% }) %>
+        </tr>
+      </thead>
+      <tbody>
+        <% SEMESTERS.forEach(sem => { %>
+          <tr class="syl-matrix-row">
+            <td class="syl-td-sem">
+              <span class="syl-sem-badge">Sem <%= sem %></span>
+            </td>
+            <% SYL_TYPES.forEach(type => {
+              const doc = grouped[dept] && grouped[dept][sem] && grouped[dept][sem][type];
+            %>
+              <td class="syl-td-cell">
+                <% if (doc) { %>
+                  <div class="syl-cell-filled">
+                    <div class="syl-cell-title"><%= doc.title %></div>
+                    <% if (doc.academicYear) { %>
+                      <div class="syl-cell-year">📅 <%= doc.academicYear %></div>
+                    <% } %>
+                    <div class="syl-cell-actions">
+                      <% if (doc.pdfUrl) { %>
+                        <a href="/download/syllabus/<%= doc._id %>" target="_blank" class="syl-action-pdf" title="View PDF">📄 PDF</a>
+                      <% } else { %>
+                        <span class="syl-action-nopdf">No PDF</span>
+                      <% } %>
+                      <a href="/admin/syllabus/<%= doc._id %>/edit" class="syl-action-edit">✏️ Edit</a>
+                      <form action="/admin/syllabus/<%= doc._id %>?_method=DELETE" method="POST"
+                            onsubmit="return confirm('Delete this document?')" style="display:inline;">
+                        <button type="submit" class="syl-action-del">🗑️</button>
+                      </form>
+                    </div>
+                  </div>
+                <% } else { %>
+                  <div class="syl-cell-empty">
+                    <a href="/admin/syllabus/new?dept=<%= encodeURIComponent(dept) %>&sem=<%= sem %>&type=<%= encodeURIComponent(type) %>"
+                       class="syl-cell-upload-btn">
+                      ＋ Upload
+                    </a>
+                  </div>
+                <% } %>
+              </td>
+            <% }) %>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+<% }) %>
+
+<style>
+/* ── Tabs ── */
+.syl-tab {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:7px 14px; border-radius:50px; border:1px solid #e2e8f0;
+  background:white; font-size:.82rem; font-weight:500; cursor:pointer;
+  transition:all .2s; color:var(--gray); text-decoration:none; white-space:nowrap;
+}
+.syl-tab:hover { background:#f1f5f9; border-color:#cbd5e1; color:var(--navy); }
+.syl-tab-active { background:var(--navy)!important; color:var(--accent)!important; border-color:var(--navy)!important; font-weight:700!important; }
+
+/* ── Progress ── */
+.syl-progress-bar-wrap { margin-bottom:28px; }
+.syl-progress-label { display:flex; justify-content:space-between; font-size:.82rem; color:var(--gray); margin-bottom:8px; }
+.syl-progress-track { height:8px; background:#e2e8f0; border-radius:50px; overflow:hidden; }
+.syl-progress-fill  { height:100%; background:linear-gradient(90deg,var(--accent),var(--gold)); border-radius:50px; transition:width .5s ease; }
+
+/* ── Dept section ── */
+.syl-dept-section { background:white; border-radius:16px; border:1px solid #e2e8f0; overflow:hidden; margin-bottom:24px; box-shadow:0 2px 12px rgba(10,22,40,.05); }
+.syl-dept-header { display:flex; align-items:center; gap:16px; padding:20px 24px; border-bottom:1px solid #f1f5f9; flex-wrap:wrap; }
+.syl-dept-icon { width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.5rem; flex-shrink:0; }
+.syl-dept-name { font-family:'Playfair Display',serif; font-size:1.1rem; font-weight:800; color:var(--navy); margin-bottom:2px; }
+.syl-dept-sub  { font-size:.78rem; color:var(--gray); }
+
+/* ── Matrix table ── */
+.syl-matrix-wrap { overflow-x:auto; }
+.syl-matrix { width:100%; border-collapse:collapse; min-width:600px; }
+.syl-matrix thead { background:#f8fafc; }
+.syl-th-sem  { padding:12px 16px; text-align:center; font-family:'Space Mono',monospace; font-size:.68rem; font-weight:700; color:var(--gray); text-transform:uppercase; letter-spacing:.05em; border-bottom:2px solid #e2e8f0; width:110px; }
+.syl-th-type { padding:12px 20px; text-align:left; font-family:'Space Mono',monospace; font-size:.7rem; font-weight:700; color:var(--navy); text-transform:uppercase; letter-spacing:.04em; border-bottom:2px solid #e2e8f0; border-left:1px solid #f1f5f9; }
+.syl-matrix-row { border-bottom:1px solid #f1f5f9; transition:background .15s; }
+.syl-matrix-row:last-child { border-bottom:none; }
+.syl-matrix-row:hover { background:#fdfcf8; }
+.syl-td-sem  { padding:14px 16px; text-align:center; border-right:2px solid #f1f5f9; vertical-align:middle; }
+.syl-td-cell { padding:12px 16px; vertical-align:middle; border-left:1px solid #f1f5f9; min-width:240px; }
+.syl-sem-badge { display:inline-flex; align-items:center; justify-content:center; padding:5px 12px; background:linear-gradient(135deg,var(--navy),var(--blue)); color:var(--accent); border-radius:50px; font-family:'Space Mono',monospace; font-size:.72rem; font-weight:700; white-space:nowrap; }
+
+/* Filled cell */
+.syl-cell-filled { display:flex; flex-direction:column; gap:4px; }
+.syl-cell-title  { font-size:.82rem; font-weight:600; color:var(--navy); line-height:1.4; }
+.syl-cell-year   { font-size:.7rem; color:var(--gray); }
+.syl-cell-actions { display:flex; align-items:center; gap:6px; margin-top:4px; }
+.syl-action-pdf  { font-size:.72rem; color:var(--blue); background:rgba(26,58,107,.07); border:1px solid rgba(26,58,107,.12); border-radius:50px; padding:3px 9px; text-decoration:none; font-weight:700; transition:all .2s; }
+.syl-action-pdf:hover { background:var(--blue); color:white; }
+.syl-action-nopdf{ font-size:.7rem; color:#94a3b8; font-style:italic; }
+.syl-action-edit { font-size:.72rem; color:#d97706; background:rgba(217,119,6,.07); border:1px solid rgba(217,119,6,.12); border-radius:50px; padding:3px 9px; text-decoration:none; font-weight:700; transition:all .2s; }
+.syl-action-edit:hover { background:#d97706; color:white; }
+.syl-action-del  { font-size:.72rem; color:#dc2626; background:rgba(220,38,38,.07); border:1px solid rgba(220,38,38,.12); border-radius:50px; padding:3px 9px; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all .2s; }
+.syl-action-del:hover { background:#dc2626; color:white; }
+
+/* Empty cell */
+.syl-cell-empty { display:flex; align-items:center; justify-content:flex-start; }
+.syl-cell-upload-btn {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:6px 14px; border:1.5px dashed #cbd5e1; border-radius:8px;
+  font-size:.76rem; font-weight:600; color:#94a3b8; text-decoration:none;
+  transition:all .2s; background:transparent;
+}
+.syl-cell-upload-btn:hover { border-color:var(--accent); color:var(--navy); background:rgba(212,168,67,.06); }
+</style>
+
+<%- include('layout-bottom') %>

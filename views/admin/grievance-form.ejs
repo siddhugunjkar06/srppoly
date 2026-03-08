@@ -1,0 +1,317 @@
+<%- include('layout-top') %>
+
+<div class="admin-page-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;">
+  <div>
+    <h1><%= grievance ? '✏️ Edit Committee' : '➕ Add Committee' %></h1>
+    <p><%= grievance ? `Editing: ${grievance.name}` : 'Add a new grievance cell or committee with its PDF document' %></p>
+  </div>
+  <a href="/admin/grievances" class="admin-btn admin-btn-secondary">← Back to Grievances</a>
+</div>
+
+<div class="grf-layout">
+
+  <form
+    action="<%= grievance ? `/admin/grievances/${grievance._id}?_method=PUT` : '/admin/grievances' %>"
+    method="POST"
+    enctype="multipart/form-data"
+    id="grievanceForm"
+  >
+
+    <!-- ── COMMITTEE DETAILS ── -->
+    <div class="admin-section">
+      <h2 class="admin-section-title">📋 Committee Details</h2>
+      <div class="grf-grid">
+
+        <div class="grf-field" style="max-width:120px;">
+          <label>Sr. No <span class="req">*</span></label>
+          <input type="number" name="srNo" min="1" max="99"
+            value="<%= grievance ? grievance.srNo : nextSrNo %>" required>
+          <span class="grf-hint">Display order on page</span>
+        </div>
+
+        <div class="grf-field grf-field-full">
+          <label>Committee / Cell Name <span class="req">*</span></label>
+          <input type="text" name="name"
+            placeholder="e.g. Anti-Ragging Cell"
+            value="<%= grievance ? grievance.name : '' %>" required>
+        </div>
+
+        <div class="grf-field grf-field-full">
+          <label>Description <span style="font-weight:400;color:var(--gray);">(optional)</span></label>
+          <textarea name="description" rows="3"
+            placeholder="Brief description of this committee's mandate or scope..."><%= grievance ? (grievance.description || '') : '' %></textarea>
+        </div>
+
+        <div class="grf-field">
+          <label>Visibility</label>
+          <select name="isActive">
+            <option value="true"  <%= !grievance || grievance.isActive ? 'selected' : '' %>>✅ Active — Visible on website</option>
+            <option value="false" <%= grievance && !grievance.isActive ? 'selected' : '' %>>⏸ Hidden — Not shown publicly</option>
+          </select>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── PDF UPLOAD ── -->
+    <div class="admin-section">
+      <h2 class="admin-section-title">📄 Committee PDF Document</h2>
+
+      <% if (grievance && (grievance.pdfUrl || grievance.pdfPublicId)) { %>
+        <!-- Existing PDF -->
+        <div class="grf-pdf-current">
+          <div class="grf-pdf-icon">📄</div>
+          <div class="grf-pdf-info">
+            <div class="grf-pdf-name"><%= grievance.pdfName || 'Uploaded Document' %></div>
+            <div class="grf-pdf-actions">
+              <a href="/download/grievance/<%= grievance._id %>" target="_blank" class="grf-pdf-view-btn">
+                👁️ View / Download PDF
+              </a>
+              <button type="button" class="grf-pdf-remove" onclick="if(confirm('Remove this PDF?')) document.getElementById('grvRemoveForm').submit()">🗑️ Remove PDF</button>
+            </div>
+            <p class="grf-hint" style="margin-top:6px;">⚠️ Upload a new PDF below to replace the current one, or leave blank to keep it.</p>
+          </div>
+        </div>
+      <% } %>
+
+      <!-- Upload zone -->
+      <div class="grf-pdf-upload" id="pdfUploadZone" onclick="document.getElementById('pdfInput').click()">
+        <div class="grf-pdf-upload-inner" id="pdfUploadInner">
+          <div style="font-size:2.5rem;margin-bottom:10px;">📂</div>
+          <p class="grf-drop-text"><%= grievance && grievance.pdfUrl ? 'Click to replace PDF' : 'Click to upload PDF' %></p>
+          <p class="grf-drop-sub">PDF only · Max 10MB</p>
+        </div>
+        <div class="grf-pdf-selected" id="pdfSelected" style="display:none;">
+          <span style="font-size:2rem;">📄</span>
+          <div>
+            <div class="grf-selected-name" id="pdfSelectedName"></div>
+            <div class="grf-selected-size" id="pdfSelectedSize"></div>
+          </div>
+          <button type="button" class="grf-clear-btn" onclick="clearPDF(event)">✕ Clear</button>
+        </div>
+      </div>
+      <input type="file" name="pdf" id="pdfInput" accept="application/pdf" style="display:none;">
+    </div>
+
+    <!-- ── SUBMIT ── -->
+    <div class="grf-actions">
+      <button type="submit" class="admin-btn admin-btn-primary grf-submit" id="submitBtn">
+        <%= grievance ? '✅ Update Committee' : '➕ Add Committee' %>
+      </button>
+      <a href="/admin/grievances" class="admin-btn admin-btn-secondary">Cancel</a>
+      <% if (grievance) { %>
+        <button type="button" class="admin-btn admin-btn-danger" style="margin-left:auto;"
+          onclick="if(confirm('Delete this record permanently?')) document.getElementById('deleteForm_grievance').submit()">
+          🗑️ Delete
+        </button>
+      <% } %>
+    </div>
+
+  
+</form>
+
+<% if (grievance && (grievance.pdfUrl || grievance.pdfPublicId)) { %>
+<form id="grvRemoveForm" action="/admin/grievances/<%= grievance._id %>/remove-pdf" method="POST"></form>
+<% } %>
+
+<% if (grievance) { %>
+<form id="deleteForm_grievance"
+      action="/admin/grievances/<%= grievance._id %>?_method=DELETE"
+      method="POST">
+</form>
+<% } %>
+
+  <!-- ── QUICK ADD SIDEBAR ── -->
+  <% if (!grievance) { %>
+  <div class="grf-quick-add">
+    <div class="admin-section" style="position:sticky;top:20px;">
+      <h2 class="admin-section-title">⚡ Quick Fill — AICTE Standard Cells</h2>
+      <p style="font-size:.78rem;color:var(--gray);margin-bottom:14px;">Click any cell name to auto-fill the form</p>
+      <%
+        const cells = [
+          {srNo:1, name:'Anti-Ragging Cell'},
+          {srNo:2, name:'SC/ST Redressal Committee'},
+          {srNo:3, name:'Gender Sensitization'},
+          {srNo:4, name:"Women's Grievances Redressal Cell"},
+          {srNo:5, name:'Student Grievances Redressal Cell'},
+          {srNo:6, name:'Grievances Redressal Committee - GRC'},
+          {srNo:7, name:'Anti Harassment Committee'},
+        ];
+      %>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <% cells.forEach(c => { %>
+          <button type="button"
+            class="grf-quick-btn"
+            onclick="quickFill(<%= c.srNo %>, '<%= c.name.replace(/'/g, "\\'") %>')">
+            <span class="grf-quick-sr"><%= c.srNo %></span>
+            <span><%= c.name %></span>
+          </button>
+        <% }) %>
+      </div>
+    </div>
+  </div>
+  <% } %>
+
+</div>
+
+<style>
+.grf-layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 20px;
+  align-items: start;
+}
+.grf-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px;
+  align-items: start;
+}
+.grf-field-full { grid-column: 1 / -1; }
+.grf-field { display:flex; flex-direction:column; gap:5px; }
+.grf-field label { font-size:.82rem; font-weight:700; color:var(--navy); }
+.grf-field input, .grf-field select, .grf-field textarea {
+  padding:10px 14px; border:2px solid #e2e8f0; border-radius:10px;
+  font-size:.9rem; font-family:'DM Sans',sans-serif; color:var(--text);
+  transition:border-color .2s; outline:none; background:white;
+}
+.grf-field input:focus, .grf-field select:focus, .grf-field textarea:focus { border-color:var(--accent); }
+.grf-field textarea { resize:vertical; }
+.grf-hint { font-size:.72rem; color:var(--gray); }
+.req { color:#dc2626; }
+
+/* Existing PDF box */
+.grf-pdf-current {
+  display:flex; align-items:flex-start; gap:16px;
+  background:rgba(26,58,107,.04); border:1px solid rgba(26,58,107,.15);
+  border-radius:12px; padding:18px 20px; margin-bottom:16px;
+}
+.grf-pdf-icon { font-size:2.4rem; flex-shrink:0; }
+.grf-pdf-name { font-family:'Playfair Display',serif; font-size:.95rem; font-weight:700; color:var(--navy); margin-bottom:8px; }
+.grf-pdf-actions { display:flex; gap:10px; flex-wrap:wrap; }
+.grf-pdf-view-btn {
+  padding:6px 14px; background:var(--blue); color:white; border-radius:8px;
+  font-size:.78rem; font-weight:700; text-decoration:none; transition:all .2s;
+}
+.grf-pdf-view-btn:hover { background:var(--navy); }
+.grf-pdf-remove-btn {
+  padding:6px 14px; background:rgba(220,38,38,.08); color:#dc2626;
+  border:1px solid rgba(220,38,38,.2); border-radius:8px;
+  font-size:.78rem; font-weight:700; cursor:pointer; transition:all .2s; font-family:'DM Sans',sans-serif;
+}
+.grf-pdf-remove-btn:hover { background:#dc2626; color:white; }
+
+/* PDF Upload Zone */
+.grf-pdf-upload {
+  border:2px dashed #cbd5e1; border-radius:14px; min-height:140px;
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  transition:all .25s; background:#fafbfc; overflow:hidden;
+}
+.grf-pdf-upload:hover { border-color:var(--accent); background:rgba(212,168,67,.03); }
+.grf-pdf-upload-inner { text-align:center; padding:24px; pointer-events:none; }
+.grf-drop-text { font-size:.9rem; font-weight:600; color:var(--navy); margin:0 0 4px; }
+.grf-drop-sub  { font-size:.75rem; color:var(--gray); margin:0; }
+.grf-pdf-selected {
+  display:flex !important; align-items:center; gap:16px; padding:20px 24px; width:100%;
+}
+.grf-selected-name { font-size:.88rem; font-weight:700; color:var(--navy); font-family:'DM Sans',sans-serif; }
+.grf-selected-size { font-size:.72rem; color:var(--gray); margin-top:3px; }
+.grf-clear-btn {
+  margin-left:auto; background:rgba(220,38,38,.08); border:1px solid rgba(220,38,38,.2);
+  color:#dc2626; border-radius:8px; padding:5px 12px; font-size:.78rem; cursor:pointer;
+  font-family:'DM Sans',sans-serif; font-weight:700; transition:all .2s;
+}
+.grf-clear-btn:hover { background:#dc2626; color:white; }
+
+/* Actions */
+.grf-actions { display:flex; gap:10px; align-items:center; background:white; padding:20px; border-radius:14px; border:1px solid #e2e8f0; flex-wrap:wrap; }
+.grf-submit { padding:12px 28px !important; font-size:.95rem !important; }
+
+/* Quick Add sidebar */
+.grf-quick-add {}
+.grf-quick-btn {
+  display:flex; align-items:center; gap:10px; width:100%; text-align:left;
+  padding:10px 14px; background:white; border:1px solid #e2e8f0; border-radius:10px;
+  cursor:pointer; font-family:'DM Sans',sans-serif; font-size:.82rem; font-weight:500;
+  color:var(--navy); transition:all .2s;
+}
+.grf-quick-btn:hover { background:rgba(212,168,67,.08); border-color:var(--accent); color:var(--navy); }
+.grf-quick-sr {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:24px; height:24px; border-radius:50%; flex-shrink:0;
+  background:linear-gradient(135deg,var(--navy),var(--blue));
+  color:var(--accent); font-size:.68rem; font-weight:900;
+  font-family:'Space Mono',monospace;
+}
+
+@media (max-width: 900px) { .grf-layout { grid-template-columns: 1fr; } }
+@media (max-width: 600px) { .grf-grid { grid-template-columns: 1fr; } }
+</style>
+
+<script>
+// PDF file selection
+const pdfInput     = document.getElementById('pdfInput');
+const pdfSelected  = document.getElementById('pdfSelected');
+const uploadInner  = document.getElementById('pdfUploadInner');
+const selectedName = document.getElementById('pdfSelectedName');
+const selectedSize = document.getElementById('pdfSelectedSize');
+
+if (pdfInput) {
+  pdfInput.addEventListener('change', () => {
+    const file = pdfInput.files[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File too large. Maximum size is 10MB.');
+      pdfInput.value = '';
+      return;
+    }
+    selectedName.textContent = file.name;
+    selectedSize.textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+    uploadInner.style.display  = 'none';
+    pdfSelected.style.display  = 'flex';
+  });
+}
+
+function clearPDF(e) {
+  e.stopPropagation();
+  pdfInput.value             = '';
+  uploadInner.style.display  = 'block';
+  pdfSelected.style.display  = 'none';
+}
+
+// Drag & drop
+const zone = document.getElementById('pdfUploadZone');
+if (zone) {
+  ['dragenter','dragover'].forEach(ev => zone.addEventListener(ev, e => { e.preventDefault(); zone.style.borderColor='var(--accent)'; }));
+  ['dragleave','drop'].forEach(ev => zone.addEventListener(ev, e => { e.preventDefault(); zone.style.borderColor=''; }));
+  zone.addEventListener('drop', e => {
+    const file = e.dataTransfer.files[0];
+    if (file && file.type === 'application/pdf') {
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      pdfInput.files = dt.files;
+      pdfInput.dispatchEvent(new Event('change'));
+    } else {
+      alert('Please drop a PDF file only.');
+    }
+  });
+}
+
+// Quick fill
+function quickFill(srNo, name) {
+  document.querySelector('[name="srNo"]').value = srNo;
+  document.querySelector('[name="name"]').value = name;
+  document.querySelector('[name="name"]').focus();
+  // Highlight the filled field
+  document.querySelector('[name="name"]').style.borderColor = 'var(--accent)';
+  setTimeout(() => document.querySelector('[name="name"]').style.borderColor = '', 1500);
+}
+
+// Loading on submit
+document.getElementById('grievanceForm').addEventListener('submit', () => {
+  const btn = document.getElementById('submitBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Saving…'; }
+});
+</script>
+
+<%- include('layout-bottom') %>

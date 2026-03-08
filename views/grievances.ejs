@@ -1,0 +1,376 @@
+<%- include('partials/head') %>
+<%- include('partials/navbar') %>
+
+<!-- ── HERO BANNER ── -->
+<section class="griev-hero">
+  <div class="section-inner">
+    <div class="griev-hero-inner">
+      <div>
+        <div class="section-label" style="color:var(--accent);">Institutional Compliance</div>
+        <h1 class="section-title light" style="margin-bottom:16px;">Grievances &amp; Committees</h1>
+        <p class="section-sub light" style="margin:0;max-width:560px;">
+          SRPP Polytechnic Institute is committed to maintaining a safe, inclusive, and equitable environment for all students, staff, and faculty. The following committees address concerns and uphold institutional standards.
+        </p>
+      </div>
+      <div class="griev-hero-badge">
+        <div class="griev-badge-icon">⚖️</div>
+        <div class="griev-badge-text">AICTE<br>Compliant</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── BREADCRUMB ── -->
+<div class="griev-breadcrumb">
+  <div class="section-inner">
+    <a href="/">Home</a>
+    <span>›</span>
+    <a href="/#about">About</a>
+    <span>›</span>
+    <span>Grievances &amp; Committees</span>
+  </div>
+</div>
+
+<!-- ── MAIN TABLE SECTION ── -->
+<section class="griev-section">
+  <div class="section-inner">
+
+    <div class="griev-intro">
+      <p>The following statutory cells and committees have been constituted as per AICTE norms and Government of Maharashtra directives. Each committee has a defined mandate and is responsible for addressing grievances in their respective domain.</p>
+    </div>
+
+    <% if (grievances && grievances.length > 0) { %>
+
+      <!-- Desktop Table -->
+      <div class="griev-table-wrap">
+        <table class="griev-table">
+          <thead>
+            <tr>
+              <th class="griev-th-sr">Sr. No</th>
+              <th class="griev-th-name">Committee / Cell Name</th>
+              <th class="griev-th-dl">Download PDF</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% grievances.forEach((g, i) => { %>
+              <tr class="griev-row <%= i % 2 === 0 ? 'griev-row-even' : 'griev-row-odd' %>">
+
+                <!-- Sr. No -->
+                <td class="griev-td-sr">
+                  <span class="griev-sr-badge"><%= g.srNo %></span>
+                </td>
+
+                <!-- Name + Description -->
+                <td class="griev-td-name">
+                  <div class="griev-cell-name"><%= g.name %></div>
+                  <% if (g.description) { %>
+                    <div class="griev-cell-desc"><%= g.description %></div>
+                  <% } %>
+                </td>
+
+                <!-- Download -->
+                <td class="griev-td-dl">
+                  <% if (g.pdfUrl) { %>
+                    <a href="/download/grievance/<%= g._id %>"
+                       class="griev-dl-btn">
+                      <span class="griev-dl-icon">⬇</span>
+                      <span>Download</span>
+                    </a>
+                  <% } else { %>
+                    <span class="griev-no-pdf">— Not available —</span>
+                  <% } %>
+                </td>
+
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Mobile Cards (shown instead of table on small screens) -->
+      <div class="griev-mobile-cards">
+        <% grievances.forEach(g => { %>
+          <div class="griev-mobile-card">
+            <div class="griev-mobile-header">
+              <span class="griev-sr-badge"><%= g.srNo %></span>
+              <h3 class="griev-mobile-name"><%= g.name %></h3>
+            </div>
+            <% if (g.description) { %>
+              <p class="griev-cell-desc" style="margin:8px 0 12px;"><%= g.description %></p>
+            <% } %>
+            <% if (g.pdfUrl) { %>
+              <a href="/download/grievance/<%= g._id %>"
+                 class="griev-dl-btn griev-dl-full">
+                <span class="griev-dl-icon">⬇</span>
+                <span>Download PDF</span>
+              </a>
+            <% } else { %>
+              <span class="griev-no-pdf">PDF not available</span>
+            <% } %>
+          </div>
+        <% }) %>
+      </div>
+
+    <% } else { %>
+      <div class="griev-empty">
+        <div style="font-size:3.5rem;margin-bottom:16px;">⚖️</div>
+        <h3>Information Coming Soon</h3>
+        <p>Grievance committee details are being updated. Please check back shortly or contact the institute directly.</p>
+        <a href="/#contact" class="griev-dl-btn" style="margin-top:20px;display:inline-flex;">📞 Contact Us</a>
+      </div>
+    <% } %>
+
+    <!-- ── Info Box ── -->
+    <div class="griev-info-box">
+      <div class="griev-info-icon">ℹ️</div>
+      <div>
+        <strong>How to File a Grievance?</strong>
+        <p>Submit your complaint in writing to the respective committee or drop it in the Grievance Box located at the institute entrance. You may also email your concern to <a href="mailto:grievance@srpp.edu.in">grievance@srpp.edu.in</a>. All complaints are treated with strict confidentiality.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<%- include('partials/footer') %>
+
+<style>
+/* ══ HERO ══════════════════════════════════════════════════════════ */
+.griev-hero {
+  background: linear-gradient(135deg, var(--navy) 0%, #1a2f5c 60%, #0f1e3d 100%);
+  padding: 100px 0 70px;
+  position: relative;
+  overflow: hidden;
+}
+.griev-hero::before {
+  content: '';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 380px; height: 380px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(212,168,67,.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.griev-hero-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+.griev-hero-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: rgba(212,168,67,.1);
+  border: 2px solid rgba(212,168,67,.3);
+  border-radius: 20px;
+  padding: 24px 28px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.griev-badge-icon { font-size: 2.8rem; }
+.griev-badge-text { font-family: 'Space Mono', monospace; font-size: .7rem; color: var(--accent); font-weight: 700; line-height: 1.6; letter-spacing: .05em; }
+
+/* ══ BREADCRUMB ══════════════════════════════════════════════════ */
+.griev-breadcrumb {
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 12px 0;
+}
+.griev-breadcrumb .section-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .82rem;
+  color: var(--gray);
+  flex-wrap: wrap;
+}
+.griev-breadcrumb a { color: var(--blue); text-decoration: none; }
+.griev-breadcrumb a:hover { color: var(--accent); }
+.griev-breadcrumb span:last-child { color: var(--navy); font-weight: 600; }
+
+/* ══ SECTION ═════════════════════════════════════════════════════ */
+.griev-section { background: var(--light); padding: 64px 0 80px; }
+
+.griev-intro {
+  max-width: 780px;
+  margin: 0 auto 40px;
+  text-align: center;
+}
+.griev-intro p {
+  font-size: .95rem;
+  color: var(--gray);
+  line-height: 1.8;
+}
+
+/* ══ TABLE ═══════════════════════════════════════════════════════ */
+.griev-table-wrap {
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 32px rgba(10,22,40,.08);
+  border: 1px solid #e2e8f0;
+  margin-bottom: 32px;
+}
+.griev-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.griev-table thead {
+  background: linear-gradient(135deg, var(--navy), #1a3366);
+}
+.griev-table th {
+  padding: 18px 24px;
+  text-align: left;
+  font-family: 'Space Mono', monospace;
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.griev-th-sr   { width: 90px;  text-align: center; }
+.griev-th-name { }
+.griev-th-dl   { width: 160px; text-align: center; }
+
+/* Rows */
+.griev-row { transition: background .18s; }
+.griev-row-even { background: #ffffff; }
+.griev-row-odd  { background: #f8fafd; }
+.griev-row:hover { background: rgba(212,168,67,.06) !important; }
+.griev-table td { padding: 20px 24px; border-bottom: 1px solid #f0f4f8; vertical-align: middle; }
+.griev-row:last-child td { border-bottom: none; }
+
+/* Sr No badge */
+.griev-td-sr   { text-align: center; }
+.griev-sr-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px; height: 38px;
+  background: linear-gradient(135deg, var(--navy), var(--blue));
+  color: var(--accent);
+  border-radius: 50%;
+  font-family: 'Space Mono', monospace;
+  font-size: .85rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* Cell Name */
+.griev-td-name  { }
+.griev-cell-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 4px;
+}
+.griev-cell-desc {
+  font-size: .8rem;
+  color: var(--gray);
+  line-height: 1.6;
+}
+
+/* Download button */
+.griev-td-dl { text-align: center; }
+.griev-dl-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 20px;
+  background: linear-gradient(135deg, var(--navy), var(--blue));
+  color: var(--accent) !important;
+  border-radius: 50px;
+  font-size: .8rem;
+  font-weight: 700;
+  text-decoration: none;
+  font-family: 'DM Sans', sans-serif;
+  transition: all .25s;
+  border: 2px solid transparent;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.griev-dl-btn:hover {
+  background: transparent;
+  border-color: var(--navy);
+  color: var(--navy) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(10,22,40,.15);
+}
+.griev-dl-icon {
+  font-size: .9rem;
+  font-style: normal;
+}
+.griev-dl-full { width: 100%; justify-content: center; }
+.griev-no-pdf {
+  font-size: .75rem;
+  color: #94a3b8;
+  font-style: italic;
+  font-family: 'Space Mono', monospace;
+}
+
+/* ══ MOBILE CARDS ════════════════════════════════════════════════ */
+.griev-mobile-cards { display: none; flex-direction: column; gap: 14px; margin-bottom: 32px; }
+.griev-mobile-card {
+  background: white;
+  border-radius: 14px;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 12px rgba(10,22,40,.06);
+}
+.griev-mobile-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 4px;
+}
+.griev-mobile-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--navy);
+  flex: 1;
+  line-height: 1.4;
+}
+
+/* ══ INFO BOX ════════════════════════════════════════════════════ */
+.griev-info-box {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  background: linear-gradient(135deg, rgba(212,168,67,.08), rgba(212,168,67,.03));
+  border: 1px solid rgba(212,168,67,.3);
+  border-radius: 16px;
+  padding: 24px 28px;
+  margin-top: 12px;
+}
+.griev-info-icon { font-size: 1.8rem; flex-shrink: 0; margin-top: 2px; }
+.griev-info-box strong { display: block; font-family: 'Playfair Display', serif; font-size: 1rem; color: var(--navy); margin-bottom: 6px; }
+.griev-info-box p { font-size: .88rem; color: var(--gray); line-height: 1.7; margin: 0; }
+.griev-info-box a { color: var(--blue); font-weight: 600; }
+
+/* ══ EMPTY STATE ═════════════════════════════════════════════════ */
+.griev-empty {
+  text-align: center;
+  padding: 80px 24px;
+  background: white;
+  border-radius: 20px;
+  border: 2px dashed rgba(212,168,67,.25);
+  margin-bottom: 32px;
+}
+.griev-empty h3 { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--navy); margin-bottom: 10px; }
+.griev-empty p  { color: var(--gray); font-size: .9rem; max-width: 400px; margin: 0 auto; }
+
+/* ══ RESPONSIVE ══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .griev-table-wrap  { display: none; }
+  .griev-mobile-cards { display: flex; }
+  .griev-hero-badge  { display: none; }
+  .griev-hero        { padding: 80px 0 50px; }
+  .griev-info-box    { flex-direction: column; gap: 10px; }
+}
+</style>

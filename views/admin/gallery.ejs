@@ -1,0 +1,231 @@
+<%- include('layout-top') %>
+
+<div class="admin-page-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;">
+  <div>
+    <h1>Gallery Management</h1>
+    <p>Upload, organise, and manage all campus photos displayed on the website</p>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <a href="/admin/gallery/new?bulk=1" class="admin-btn admin-btn-secondary">⬆️ Bulk Upload</a>
+    <a href="/admin/gallery/new" class="admin-btn admin-btn-primary">+ Upload Photo</a>
+  </div>
+</div>
+
+<!-- ── Category Filter Tabs ── -->
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;">
+  <%
+    const allCats = ['All','Campus','Labs','Events','Sports','Achievements','Cultural'];
+    const catEmoji = { All:'🏛️', Campus:'🏫', Labs:'🔬', Events:'🎉', Sports:'🏏', Achievements:'🏆', Cultural:'🎭' };
+  %>
+  <% allCats.forEach(cat => { %>
+    <a href="/admin/gallery?cat=<%= cat %>"
+       class="gal-tab <%= activeCat === cat ? 'gal-tab-active' : '' %>">
+      <%= catEmoji[cat] %> <%= cat %>
+      <span class="gal-tab-count"><%= categoryCounts[cat] || 0 %></span>
+    </a>
+  <% }) %>
+</div>
+
+<!-- ── Summary ── -->
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+  <p style="font-size:.85rem;color:var(--gray);">
+    Showing <strong style="color:var(--navy);"><%= images.length %></strong> photo<%= images.length !== 1 ? 's' : '' %>
+    <% if (activeCat !== 'All') { %> in <strong style="color:var(--navy);"><%= activeCat %></strong><% } %>
+  </p>
+  <p style="font-size:.75rem;color:var(--gray);font-family:'Space Mono',monospace;">
+    ⭐ = Featured on homepage
+  </p>
+</div>
+
+<% if (images && images.length > 0) { %>
+
+  <!-- ── Gallery Grid ── -->
+  <div class="gal-admin-grid">
+    <% images.forEach(img => { %>
+      <div class="gal-admin-card" id="card-<%= img._id %>">
+
+        <!-- Image -->
+        <div class="gal-img-wrap">
+          <img src="<%= img.imageUrl %>" alt="<%= img.title %>" class="gal-img" loading="lazy">
+
+          <!-- Overlay Badges -->
+          <div class="gal-img-badges">
+            <span class="gal-cat-badge gal-cat-<%= img.category.toLowerCase().replace(/\s+/g,'') %>">
+              <%= img.category %>
+            </span>
+            <% if (img.isFeatured) { %>
+              <span class="gal-featured-badge">⭐ Featured</span>
+            <% } %>
+          </div>
+
+          <!-- Hover Actions -->
+          <div class="gal-img-overlay">
+            <a href="/admin/gallery/<%= img._id %>/edit" class="gal-action-btn gal-edit-btn" title="Edit">✏️ Edit</a>
+            <button
+              class="gal-action-btn gal-feature-btn <%= img.isFeatured ? 'active' : '' %>"
+              onclick="toggleFeatured('<%= img._id %>', this)"
+              title="<%= img.isFeatured ? 'Remove from featured' : 'Mark as featured' %>">
+              <%= img.isFeatured ? '⭐ Unfeature' : '☆ Feature' %>
+            </button>
+          </div>
+        </div>
+
+        <!-- Card Body -->
+        <div class="gal-card-body">
+          <h4 class="gal-title" title="<%= img.title %>"><%= img.title %></h4>
+          <% if (img.description) { %>
+            <p class="gal-desc"><%= img.description.substring(0, 60) %><%= img.description.length > 60 ? '…' : '' %></p>
+          <% } %>
+          <div class="gal-meta">
+            <span>📅 <%= new Date(img.createdAt).toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'}) %></span>
+            <% if (img.takenAt) { %>
+              <span>📸 <%= new Date(img.takenAt).toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'}) %></span>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Card Footer Actions -->
+        <div class="gal-card-footer">
+          <a href="/admin/gallery/<%= img._id %>/edit"
+             class="admin-btn admin-btn-secondary admin-btn-sm" style="flex:1;justify-content:center;">
+            ✏️ Edit
+          </a>
+          <form action="/admin/gallery/<%= img._id %>?_method=DELETE" method="POST"
+                onsubmit="return confirm('Delete &quot;<%= img.title %>&quot;? This cannot be undone.')"
+                style="flex:1;">
+            <button type="submit"
+                    class="admin-btn admin-btn-danger admin-btn-sm"
+                    style="width:100%;justify-content:center;">
+              🗑️ Delete
+            </button>
+          </form>
+        </div>
+
+      </div>
+    <% }) %>
+  </div>
+
+<% } else { %>
+  <!-- Empty State -->
+  <div class="gal-empty">
+    <div style="font-size:4rem;margin-bottom:16px;">🖼️</div>
+    <h3>No Photos Yet</h3>
+    <p>
+      <% if (activeCat !== 'All') { %>
+        No photos in the "<strong><%= activeCat %></strong>" category.
+        <a href="/admin/gallery">View all</a> or
+      <% } %>
+      Upload your first photo to get started.
+    </p>
+    <a href="/admin/gallery/new" class="admin-btn admin-btn-primary" style="margin-top:16px;">+ Upload First Photo</a>
+  </div>
+<% } %>
+
+<style>
+/* ── Category Tabs ── */
+.gal-tab {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:7px 14px; border-radius:50px; border:1px solid #e2e8f0;
+  background:white; font-size:.82rem; font-weight:500; cursor:pointer;
+  transition:all .2s; color:var(--gray); text-decoration:none; white-space:nowrap;
+}
+.gal-tab:hover { background:#f1f5f9; border-color:#cbd5e1; color:var(--navy); }
+.gal-tab-active { background:var(--navy)!important; color:var(--accent)!important; border-color:var(--navy)!important; font-weight:700!important; }
+.gal-tab-count { background:rgba(255,255,255,.15); border-radius:50px; padding:1px 7px; font-size:.7rem; font-family:'Space Mono',monospace; }
+.gal-tab-active .gal-tab-count { background:rgba(212,168,67,.25); color:var(--accent); }
+
+/* ── Gallery Grid ── */
+.gal-admin-grid {
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap:18px;
+}
+.gal-admin-card {
+  background:white; border-radius:14px; border:1px solid #e2e8f0;
+  overflow:hidden; transition:all .25s; display:flex; flex-direction:column;
+}
+.gal-admin-card:hover { border-color:var(--accent); box-shadow:0 8px 28px rgba(10,22,40,.1); transform:translateY(-2px); }
+
+/* Image */
+.gal-img-wrap { position:relative; aspect-ratio:4/3; overflow:hidden; background:#f1f5f9; }
+.gal-img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .4s; }
+.gal-admin-card:hover .gal-img { transform:scale(1.04); }
+
+/* Badges on image */
+.gal-img-badges { position:absolute; top:10px; left:10px; display:flex; flex-wrap:wrap; gap:5px; }
+.gal-cat-badge {
+  font-size:.62rem; padding:3px 9px; border-radius:50px;
+  font-family:'Space Mono',monospace; font-weight:700; backdrop-filter:blur(6px);
+}
+.gal-cat-campus      { background:rgba(26,58,107,.8); color:#93c5fd; }
+.gal-cat-labs        { background:rgba(5,150,105,.8); color:#6ee7b7; }
+.gal-cat-events      { background:rgba(124,58,237,.8); color:#c4b5fd; }
+.gal-cat-sports      { background:rgba(220,38,38,.8); color:#fca5a5; }
+.gal-cat-achievements { background:rgba(180,83,9,.8); color:#fde68a; }
+.gal-cat-cultural    { background:rgba(219,39,119,.8); color:#fbcfe8; }
+.gal-featured-badge  { background:rgba(212,168,67,.9); color:var(--navy); font-size:.62rem; padding:3px 9px; border-radius:50px; font-family:'Space Mono',monospace; font-weight:900; }
+
+/* Hover overlay */
+.gal-img-overlay {
+  position:absolute; inset:0; background:rgba(10,22,40,.55); backdrop-filter:blur(2px);
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  opacity:0; transition:opacity .25s;
+}
+.gal-admin-card:hover .gal-img-overlay { opacity:1; }
+.gal-action-btn {
+  padding:8px 14px; border-radius:8px; font-size:.78rem; font-weight:700;
+  border:2px solid rgba(255,255,255,.4); background:rgba(255,255,255,.12);
+  color:white; cursor:pointer; transition:all .2s; text-decoration:none; display:inline-flex;
+  align-items:center; gap:5px; font-family:'DM Sans',sans-serif; backdrop-filter:blur(4px);
+}
+.gal-action-btn:hover { background:white; color:var(--navy); border-color:white; }
+.gal-feature-btn.active { background:rgba(212,168,67,.3); border-color:var(--accent); color:var(--gold); }
+.gal-feature-btn.active:hover { background:var(--accent); color:var(--navy); }
+
+/* Card body */
+.gal-card-body { padding:14px 16px; flex:1; }
+.gal-title { font-family:'Playfair Display',serif; font-size:.95rem; font-weight:700; color:var(--navy); margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.gal-desc { font-size:.78rem; color:var(--gray); margin-bottom:8px; line-height:1.5; }
+.gal-meta { display:flex; gap:10px; flex-wrap:wrap; }
+.gal-meta span { font-size:.7rem; color:var(--gray); font-family:'Space Mono',monospace; }
+
+/* Card footer */
+.gal-card-footer { padding:10px 14px; border-top:1px solid #f1f5f9; display:flex; gap:8px; background:#fafbfc; }
+
+/* Empty */
+.gal-empty { text-align:center; padding:80px 24px; background:white; border-radius:16px; border:2px dashed rgba(212,168,67,.25); }
+.gal-empty h3 { font-family:'Playfair Display',serif; font-size:1.4rem; color:var(--navy); margin-bottom:8px; }
+.gal-empty p { color:var(--gray); }
+
+@media(max-width:600px) { .gal-admin-grid { grid-template-columns:1fr 1fr; gap:12px; } }
+@media(max-width:400px) { .gal-admin-grid { grid-template-columns:1fr; } }
+</style>
+
+<script>
+async function toggleFeatured(id, btn) {
+  try {
+    const res  = await fetch(`/admin/gallery/${id}/feature`, { method: 'POST' });
+    const data = await res.json();
+    if (data.success) {
+      btn.textContent    = data.isFeatured ? '⭐ Unfeature' : '☆ Feature';
+      btn.title          = data.isFeatured ? 'Remove from featured' : 'Mark as featured';
+      btn.classList.toggle('active', data.isFeatured);
+
+      // Update badge on card
+      const card    = document.getElementById(`card-${id}`);
+      const badges  = card.querySelector('.gal-img-badges');
+      let featBadge = badges.querySelector('.gal-featured-badge');
+      if (data.isFeatured && !featBadge) {
+        featBadge = document.createElement('span');
+        featBadge.className   = 'gal-featured-badge';
+        featBadge.textContent = '⭐ Featured';
+        badges.appendChild(featBadge);
+      } else if (!data.isFeatured && featBadge) {
+        featBadge.remove();
+      }
+    }
+  } catch (e) { alert('Could not toggle featured status.'); }
+}
+</script>
+
+<%- include('layout-bottom') %>

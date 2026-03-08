@@ -1,0 +1,246 @@
+<%- include('layout-top') %>
+
+<div class="admin-page-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;">
+  <div>
+    <h1><%= faculty ? '✏️ Edit Faculty' : '➕ Add Faculty' %></h1>
+    <p><%= faculty ? `Updating details for ${faculty.name}` : 'Add a new faculty member with photo and details' %></p>
+  </div>
+  <a href="/admin/faculty" class="admin-btn admin-btn-secondary">← Back to Faculty</a>
+</div>
+
+<div class="fac-form-layout">
+
+  <!-- ── FORM ── -->
+  <form
+    action="<%= faculty ? `/admin/faculty/${faculty._id}?_method=PUT` : '/admin/faculty' %>"
+    method="POST"
+    enctype="multipart/form-data"
+    id="facultyForm"
+  >
+
+    <!-- PHOTO UPLOAD CARD -->
+    <div class="admin-section fac-photo-section">
+      <h2 class="admin-section-title">📸 Faculty Photo</h2>
+
+      <div class="photo-upload-area" id="photoUploadArea">
+        <!-- Preview -->
+        <div class="photo-preview-wrap">
+          <% if (faculty && faculty.imageUrl) { %>
+            <img src="<%= faculty.imageUrl %>" alt="Current Photo" id="photoPreview" class="photo-preview-img">
+          <% } else { %>
+            <div class="photo-preview-placeholder" id="photoPlaceholder">
+              <span>👤</span>
+              <p>No photo uploaded</p>
+            </div>
+            <img src="" alt="" id="photoPreview" class="photo-preview-img" style="display:none;">
+          <% } %>
+        </div>
+
+        <!-- Upload Controls -->
+        <div class="photo-upload-controls">
+          <label for="photoInput" class="photo-upload-btn">
+            📁 Choose Photo
+          </label>
+          <input type="file" name="photo" id="photoInput" accept="image/*" style="display:none;">
+          <p class="photo-hint">JPG, PNG or WebP · Max 5MB · Auto-cropped to 400×400</p>
+          <% if (faculty && faculty.imageUrl) { %>
+            <p class="photo-hint" style="color:var(--accent);">⚠️ Uploading a new photo will replace the current one</p>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- PERSONAL DETAILS -->
+    <div class="admin-section">
+      <h2 class="admin-section-title">👤 Personal Details</h2>
+      <div class="fac-form-grid">
+
+        <div class="fac-field fac-field-full">
+          <label>Full Name <span class="req">*</span></label>
+          <input type="text" name="name" placeholder="e.g. Dr. Ramesh Patil"
+            value="<%= faculty ? faculty.name : '' %>" required>
+        </div>
+
+        <div class="fac-field">
+          <label>Designation <span class="req">*</span></label>
+          <input type="text" name="designation" placeholder="e.g. Assistant Professor"
+            value="<%= faculty ? faculty.designation : '' %>" required>
+          <span class="fac-hint">e.g. Professor, Assistant Professor, HOD, Lab Instructor</span>
+        </div>
+
+        <div class="fac-field">
+          <label>Department <span class="req">*</span></label>
+          <select name="department" required>
+            <option value="">Select Department</option>
+            <% ['Electrical Engineering','Computer Engineering','AI & Machine Learning','Electronics & Communication','Science & Humanities'].forEach(dept => { %>
+              <option value="<%= dept %>" <%= faculty && faculty.department === dept ? 'selected' : '' %>><%= dept %></option>
+            <% }) %>
+          </select>
+        </div>
+
+        <div class="fac-field">
+          <label>Qualification <span class="req">*</span></label>
+          <input type="text" name="qualification" placeholder="e.g. M.Tech, Ph.D in Electrical"
+            value="<%= faculty ? faculty.qualification : '' %>" required>
+        </div>
+
+        <div class="fac-field">
+          <label>Experience</label>
+          <input type="text" name="experience" placeholder="e.g. 15+ Years"
+            value="<%= faculty ? (faculty.experience || '') : '' %>">
+        </div>
+
+        <div class="fac-field fac-field-full">
+          <label>Specialization / Subjects Taught</label>
+          <input type="text" name="specialization" placeholder="e.g. Power Electronics, PLC Programming, Control Systems"
+            value="<%= faculty ? (faculty.specialization || '') : '' %>">
+        </div>
+
+      </div>
+    </div>
+
+    <!-- CONTACT DETAILS -->
+    <div class="admin-section">
+      <h2 class="admin-section-title">📞 Contact Details</h2>
+      <div class="fac-form-grid">
+
+        <div class="fac-field">
+          <label>Email Address</label>
+          <input type="email" name="email" placeholder="faculty@srpp.edu.in"
+            value="<%= faculty ? (faculty.email || '') : '' %>">
+        </div>
+
+        <div class="fac-field">
+          <label>Phone Number</label>
+          <input type="tel" name="phone" placeholder="+91 XXXXX XXXXX"
+            value="<%= faculty ? (faculty.phone || '') : '' %>">
+        </div>
+
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="admin-section">
+      <h2 class="admin-section-title">⚙️ Display Settings</h2>
+      <div class="fac-form-grid">
+
+        <div class="fac-field">
+          <label>Display Order</label>
+          <input type="number" name="order" min="0" max="999" placeholder="0"
+            value="<%= faculty ? (faculty.order || 0) : 0 %>">
+          <span class="fac-hint">Lower number = appears first. 0 = default.</span>
+        </div>
+
+        <div class="fac-field" style="display:flex;align-items:center;gap:12px;padding-top:24px;">
+          <input type="checkbox" name="isHOD" id="isHOD" value="true"
+            <%= faculty && faculty.isHOD ? 'checked' : '' %>
+            style="width:20px;height:20px;cursor:pointer;accent-color:var(--accent);">
+          <label for="isHOD" style="font-weight:700;color:var(--navy);cursor:pointer;font-size:.95rem;">
+            Mark as Head of Department (HOD)
+            <span class="fac-hint" style="display:block;font-weight:400;">HOD badge will appear on photo. HODs are listed first.</span>
+          </label>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- SUBMIT -->
+    <div class="fac-form-actions">
+      <button type="submit" class="admin-btn admin-btn-primary fac-submit-btn" id="submitBtn">
+        <%= faculty ? '✅ Update Faculty' : '➕ Add Faculty' %>
+      </button>
+      <a href="/admin/faculty" class="admin-btn admin-btn-secondary">Cancel</a>
+      <% if (faculty) { %>
+        <form action="/admin/faculty/<%= faculty._id %>?_method=DELETE" method="POST"
+              onsubmit="return confirm('Permanently delete <%= faculty.name %>?')"
+              style="margin-left:auto;">
+          <button type="submit" class="admin-btn admin-btn-danger">🗑️ Delete This Faculty</button>
+        </form>
+      <% } %>
+    </div>
+
+  </form>
+</div>
+
+<!-- Styles -->
+<style>
+.fac-form-layout { display: flex; flex-direction: column; gap: 20px; max-width: 900px; }
+
+/* Photo Upload */
+.fac-photo-section {}
+.photo-upload-area { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
+.photo-preview-wrap { flex-shrink: 0; }
+.photo-preview-img { width: 140px; height: 140px; object-fit: cover; border-radius: 50%; border: 3px solid var(--accent); display: block; }
+.photo-preview-placeholder { width: 140px; height: 140px; border-radius: 50%; background: linear-gradient(135deg, var(--navy), var(--blue)); border: 3px solid var(--accent); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+.photo-preview-placeholder span { font-size: 2.5rem; }
+.photo-preview-placeholder p { font-size: .65rem; color: rgba(255,255,255,.5); font-family: 'Space Mono', monospace; }
+.photo-upload-controls { display: flex; flex-direction: column; gap: 8px; justify-content: center; }
+.photo-upload-btn { display: inline-flex; align-items: center; gap: 8px; background: var(--navy); color: var(--accent); padding: 10px 20px; border-radius: 8px; font-size: .88rem; font-weight: 700; cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif; width: fit-content; }
+.photo-upload-btn:hover { background: var(--blue); }
+.photo-hint { font-size: .75rem; color: var(--gray); }
+
+/* Form Grid */
+.fac-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.fac-field { display: flex; flex-direction: column; gap: 6px; }
+.fac-field-full { grid-column: 1 / -1; }
+.fac-field label { font-size: .82rem; font-weight: 700; color: var(--navy); }
+.fac-field input, .fac-field select {
+  padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 10px;
+  font-size: .9rem; font-family: 'DM Sans', sans-serif; color: var(--text);
+  transition: border-color .2s; background: white; outline: none;
+}
+.fac-field input:focus, .fac-field select:focus { border-color: var(--accent); }
+.fac-hint { font-size: .72rem; color: var(--gray); }
+.req { color: #dc2626; }
+
+/* Submit bar */
+.fac-form-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; background: white; padding: 20px; border-radius: 14px; border: 1px solid #e2e8f0; }
+.fac-submit-btn { padding: 12px 28px !important; font-size: .95rem !important; }
+
+@media (max-width: 640px) {
+  .fac-form-grid { grid-template-columns: 1fr; }
+  .fac-field-full { grid-column: 1; }
+  .photo-upload-area { flex-direction: column; align-items: center; text-align: center; }
+  .photo-upload-controls { align-items: center; }
+}
+</style>
+
+<!-- Photo Preview Script -->
+<script>
+const photoInput   = document.getElementById('photoInput');
+const photoPreview = document.getElementById('photoPreview');
+const placeholder  = document.getElementById('photoPlaceholder');
+const submitBtn    = document.getElementById('submitBtn');
+
+if (photoInput) {
+  photoInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate size
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File is too large. Maximum size is 5MB.');
+      photoInput.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      photoPreview.src = ev.target.result;
+      photoPreview.style.display = 'block';
+      if (placeholder) placeholder.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// Show loading on submit
+if (submitBtn) {
+  document.getElementById('facultyForm').addEventListener('submit', () => {
+    submitBtn.textContent = '⏳ Saving...';
+    submitBtn.disabled = true;
+  });
+}
+</script>
+
+<%- include('layout-bottom') %>

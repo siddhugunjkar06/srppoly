@@ -1,0 +1,47 @@
+<%- include('partials/head') %>
+<%- include('partials/navbar') %>
+
+<section style="background:var(--navy);padding:80px 0 60px;">
+  <div class="section-inner">
+    <div class="section-label" style="color:var(--accent);">Stay Updated</div>
+    <h1 class="section-title light">Notices & Announcements</h1>
+    <p class="section-sub light">Latest news, circulars, and important updates from SRPP Polytechnic Institute.</p>
+  </div>
+</section>
+
+<section style="background:var(--light);padding:60px 0;">
+  <div class="section-inner">
+    <!-- Category Filter -->
+    <div class="gallery-tabs" style="margin-bottom:36px;">
+      <% ['All','Academic','Admission','Examination','Event','General'].forEach(cat => { %>
+        <a href="/notices?category=<%= cat %>" class="tab-btn <%= activeCategory === cat ? 'active' : '' %>"><%= cat %></a>
+      <% }) %>
+    </div>
+
+    <% if (notices && notices.length > 0) { %>
+      <div class="notices-list">
+        <% notices.forEach(notice => { %>
+          <div class="notice-list-item fade-in">
+            <div class="notice-list-meta">
+              <span class="notice-cat notice-cat-<%= notice.category.toLowerCase() %>"><%= notice.category %></span>
+              <% if (notice.isImportant) { %><span class="notice-important">⚠️ Important</span><% } %>
+              <% if (notice.isNew) { %><span class="notice-new">NEW</span><% } %>
+              <span class="notice-date">📅 <%= new Date(notice.publishedAt).toLocaleDateString('en-IN', {day:'numeric',month:'long',year:'numeric'}) %></span>
+            </div>
+            <h3 class="notice-list-title"><%= notice.title %></h3>
+            <p class="notice-list-body"><%= notice.content %></p>
+          </div>
+        <% }) %>
+      </div>
+    <% } else { %>
+      <div class="empty-state">
+        <div style="font-size:3rem;margin-bottom:16px;">📋</div>
+        <h3>No notices found</h3>
+        <p>No notices in the "<%= activeCategory %>" category at this time. Check back soon!</p>
+        <a href="/notices" class="btn-primary" style="margin-top:20px;">View All Notices</a>
+      </div>
+    <% } %>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

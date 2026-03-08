@@ -1,0 +1,234 @@
+<%- include('layout-top') %>
+
+<div class="admin-page-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;">
+  <div>
+    <h1><%= manual ? '✏️ Edit Lab Manual' : '🔬 Add Lab Manual' %></h1>
+    <p><%= manual ? `Editing: ${manual.subjectName} — Sem ${manual.semester}` : 'Add a subject-wise lab manual for a semester' %></p>
+  </div>
+  <a href="/admin/lab-manuals" class="admin-btn admin-btn-secondary">← Back to Lab Manuals</a>
+</div>
+
+<div style="max-width:700px;">
+<form
+  action="<%= manual ? `/admin/lab-manuals/${manual._id}?_method=PUT` : '/admin/lab-manuals' %>"
+  method="POST"
+  enctype="multipart/form-data"
+  id="lmForm"
+>
+
+  <!-- ── CLASSIFICATION ── -->
+  <div class="admin-section">
+    <h2 class="admin-section-title">🗂️ Classification</h2>
+    <div class="lmf-grid">
+
+      <div class="lmf-field">
+        <label>Department <span class="req">*</span></label>
+        <select name="department" required>
+          <option value="">Select Department</option>
+          <% DEPTS.forEach(d => { %>
+            <option value="<%= d %>"
+              <%= (manual && manual.department===d) || prefillDept===d ? 'selected':'' %>>
+              <%= d %>
+            </option>
+          <% }) %>
+        </select>
+      </div>
+
+      <div class="lmf-field">
+        <label>Semester <span class="req">*</span></label>
+        <select name="semester" required>
+          <option value="">Select Semester</option>
+          <% SEMESTERS.forEach(s => { %>
+            <option value="<%= s %>"
+              <%= (manual && manual.semester===s) || parseInt(prefillSem)===s ? 'selected':'' %>>
+              Sem <%= s %> &nbsp;(<%= s<=2?'1st Year':s<=4?'2nd Year':'3rd Year' %>)
+            </option>
+          <% }) %>
+        </select>
+      </div>
+
+      <div class="lmf-field">
+        <label>Subject Code <span class="lmf-opt">(optional — e.g. 22318)</span></label>
+        <input type="text" name="subjectCode" placeholder="22318"
+          value="<%= manual ? (manual.subjectCode||'') : '' %>">
+      </div>
+
+      <div class="lmf-field">
+        <label>Academic Year <span class="lmf-opt">(optional)</span></label>
+        <input type="text" name="academicYear" placeholder="2023-24"
+          value="<%= manual ? (manual.academicYear||'') : '' %>">
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── SUBJECT DETAILS ── -->
+  <div class="admin-section">
+    <h2 class="admin-section-title">📝 Subject Details</h2>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+
+      <div class="lmf-field">
+        <label>Subject Name <span class="req">*</span></label>
+        <input type="text" name="subjectName" required
+          placeholder="e.g. Power Electronics"
+          value="<%= manual ? manual.subjectName : '' %>">
+      </div>
+
+      <div class="lmf-field">
+        <label>Description <span class="lmf-opt">(optional)</span></label>
+        <textarea name="description" rows="2"
+          placeholder="Brief note about this lab manual..."><%= manual ? (manual.description||'') : '' %></textarea>
+      </div>
+
+      <div class="lmf-grid">
+        <div class="lmf-field">
+          <label>Display Order</label>
+          <input type="number" name="order" min="0" value="<%= manual ? manual.order : 0 %>">
+          <span class="lmf-hint">Lower number = shown first in the semester list</span>
+        </div>
+        <div class="lmf-field">
+          <label>Visibility</label>
+          <select name="isActive">
+            <option value="true"  <%= !manual || manual.isActive  ? 'selected':'' %>>✅ Active</option>
+            <option value="false" <%= manual && !manual.isActive  ? 'selected':'' %>>⏸ Hidden</option>
+          </select>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── PDF UPLOAD ── -->
+  <div class="admin-section">
+    <h2 class="admin-section-title">📄 Lab Manual PDF</h2>
+
+    <% if (manual && (manual.pdfUrl || manual.pdfPublicId)) { %>
+      <div class="lmf-pdf-current">
+        <span style="font-size:2rem;">📄</span>
+        <div style="flex:1;">
+          <div class="lmf-pdf-name"><%= manual.pdfName || 'Uploaded PDF' %></div>
+          <div style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;">
+            <a href="/download/lab-manual/<%= manual._id %>" target="_blank" class="lmf-pdf-view">👁️ View / Download</a>
+            <button type="button" class="lmf-pdf-remove" onclick="if(confirm('Remove this PDF?')) document.getElementById('lmRemoveForm').submit()">🗑️ Remove</button>
+          </div>
+          <p class="lmf-hint" style="margin-top:6px;">Upload a new PDF below to replace the current one.</p>
+        </div>
+      </div>
+    <% } %>
+
+    <div class="lmf-dropzone" id="lmDropzone" onclick="document.getElementById('lmPdfInput').click()">
+      <div id="lmDropHint">
+        <div style="font-size:2.5rem;margin-bottom:8px;">📂</div>
+        <p class="lmf-drop-text"><%= manual && manual.pdfUrl ? 'Drop new PDF to replace' : 'Click or drag PDF here' %></p>
+        <p class="lmf-drop-sub">PDF only · Max 20MB</p>
+      </div>
+      <div id="lmPdfInfo" style="display:none;padding:16px;align-items:center;gap:14px;width:100%;">
+        <span style="font-size:2rem;">📄</span>
+        <div>
+          <div id="lmPdfName" style="font-size:.88rem;font-weight:700;color:var(--navy);"></div>
+          <div id="lmPdfSize" style="font-size:.72rem;color:var(--gray);margin-top:2px;"></div>
+        </div>
+        <button type="button" onclick="clearPDF(event)"
+          style="margin-left:auto;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.2);color:#dc2626;border-radius:8px;padding:5px 12px;font-size:.78rem;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700;">
+          ✕ Clear
+        </button>
+      </div>
+    </div>
+    <input type="file" name="pdf" id="lmPdfInput" accept="application/pdf" style="display:none;">
+  </div>
+
+  <!-- ── ACTIONS ── -->
+  <div class="lmf-actions">
+    <button type="submit" class="admin-btn admin-btn-primary" id="lmSubmit" style="padding:12px 28px;">
+      <%= manual ? '✅ Update' : '➕ Add Lab Manual' %>
+    </button>
+    <a href="/admin/lab-manuals" class="admin-btn admin-btn-secondary">Cancel</a>
+    <% if (manual) { %>
+      <button type="button" class="admin-btn admin-btn-danger" style="margin-left:auto;"
+        onclick="if(confirm('Permanently delete this lab manual?')) document.getElementById('lmDeleteForm').submit()">
+        🗑️ Delete
+      </button>
+    <% } %>
+  </div>
+
+</form>
+
+<% if (manual && (manual.pdfUrl || manual.pdfPublicId)) { %>
+<form id="lmRemoveForm" action="/admin/lab-manuals/<%= manual._id %>/remove-pdf" method="POST"></form>
+<% } %>
+
+<% if (manual) { %>
+<form id="lmDeleteForm"
+      action="/admin/lab-manuals/<%= manual._id %>?_method=DELETE"
+      method="POST">
+</form>
+<% } %>
+</div>
+
+<style>
+.lmf-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.lmf-field { display:flex; flex-direction:column; gap:5px; }
+.lmf-field label { font-size:.82rem; font-weight:700; color:var(--navy); }
+.lmf-field input,.lmf-field select,.lmf-field textarea {
+  padding:10px 13px; border:2px solid #e2e8f0; border-radius:10px;
+  font-size:.88rem; font-family:'DM Sans',sans-serif; color:var(--text);
+  transition:border-color .2s; outline:none; background:white;
+}
+.lmf-field input:focus,.lmf-field select:focus,.lmf-field textarea:focus { border-color:var(--accent); }
+.lmf-field textarea { resize:vertical; }
+.req { color:#dc2626; }
+.lmf-opt { color:var(--gray); font-weight:400; font-size:.75rem; }
+.lmf-hint { font-size:.72rem; color:var(--gray); }
+/* PDF current */
+.lmf-pdf-current { display:flex; gap:14px; background:rgba(26,58,107,.04); border:1px solid rgba(26,58,107,.12); border-radius:12px; padding:16px; margin-bottom:14px; }
+.lmf-pdf-name { font-weight:700; font-size:.88rem; color:var(--navy); }
+.lmf-pdf-view   { padding:5px 12px; background:var(--blue); color:white; border-radius:8px; font-size:.78rem; font-weight:700; text-decoration:none; }
+.lmf-pdf-remove { padding:5px 12px; background:rgba(220,38,38,.08); border:1px solid rgba(220,38,38,.2); color:#dc2626; border-radius:8px; font-size:.78rem; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; }
+/* Dropzone */
+.lmf-dropzone { border:2px dashed #cbd5e1; border-radius:14px; min-height:120px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .2s; background:#fafbfc; overflow:hidden; }
+.lmf-dropzone:hover { border-color:var(--accent); background:rgba(212,168,67,.03); }
+#lmDropHint { text-align:center; padding:20px; pointer-events:none; }
+.lmf-drop-text { font-size:.9rem; font-weight:600; color:var(--navy); margin:0 0 4px; }
+.lmf-drop-sub  { font-size:.74rem; color:var(--gray); margin:0; }
+/* Actions */
+.lmf-actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; background:white; padding:18px 20px; border-radius:14px; border:1px solid #e2e8f0; }
+@media(max-width:600px) { .lmf-grid { grid-template-columns:1fr; } }
+</style>
+
+<script>
+const lmInput = document.getElementById('lmPdfInput');
+const dropHint = document.getElementById('lmDropHint');
+const pdfInfo  = document.getElementById('lmPdfInfo');
+
+lmInput.addEventListener('change', () => {
+  const f = lmInput.files[0];
+  if (!f) return;
+  if (f.size > 20*1024*1024) { alert('Max 20MB'); lmInput.value=''; return; }
+  document.getElementById('lmPdfName').textContent = f.name;
+  document.getElementById('lmPdfSize').textContent = (f.size/1024/1024).toFixed(2)+' MB';
+  dropHint.style.display = 'none';
+  pdfInfo.style.display  = 'flex';
+});
+function clearPDF(e) {
+  e.stopPropagation();
+  lmInput.value = '';
+  dropHint.style.display = 'block';
+  pdfInfo.style.display  = 'none';
+}
+const zone = document.getElementById('lmDropzone');
+['dragenter','dragover'].forEach(ev => zone.addEventListener(ev, e => { e.preventDefault(); zone.style.borderColor='var(--accent)'; }));
+['dragleave','drop'].forEach(ev  => zone.addEventListener(ev, e => { e.preventDefault(); zone.style.borderColor=''; }));
+zone.addEventListener('drop', e => {
+  const f = e.dataTransfer.files[0];
+  if (f && f.type==='application/pdf') {
+    const dt = new DataTransfer(); dt.items.add(f); lmInput.files = dt.files;
+    lmInput.dispatchEvent(new Event('change'));
+  } else { alert('Please drop a PDF file.'); }
+});
+document.getElementById('lmForm').addEventListener('submit', () => {
+  const btn = document.getElementById('lmSubmit');
+  btn.disabled = true; btn.textContent = '⏳ Saving…';
+});
+</script>
+
+<%- include('layout-bottom') %>

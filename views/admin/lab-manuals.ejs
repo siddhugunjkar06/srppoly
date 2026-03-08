@@ -1,0 +1,238 @@
+<%- include('layout-top') %>
+
+<%
+const DEPT_META = {
+  'Electrical Engineering':      { icon:'⚡', color:'#1a3a6b', slug:'electrical-engineering'  },
+  'Computer Engineering':        { icon:'💻', color:'#1a5c1a', slug:'computer-engineering'    },
+  'AI & Machine Learning':       { icon:'🤖', color:'#5c1a5c', slug:'ai-machine-learning'     },
+  'Electronics & Communication': { icon:'📡', color:'#5c3a1a', slug:'electronics-communication'},
+};
+%>
+
+<div class="admin-page-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;">
+  <div>
+    <h1>🔬 Lab Manuals</h1>
+    <p>Manage per-subject lab manuals for each semester across all departments</p>
+  </div>
+  <a href="/admin/lab-manuals/new<%= activeDept!=='All'?'?dept='+encodeURIComponent(activeDept):'' %>" class="admin-btn admin-btn-primary">+ Add Lab Manual</a>
+</div>
+
+<!-- ── FILTERS ── -->
+<div class="lm-filters">
+  <!-- Dept filter -->
+  <div class="lm-filter-group">
+    <span class="lm-filter-label">Department</span>
+    <div class="lm-filter-pills">
+      <% ['All',...DEPTS].forEach(d => { %>
+        <a href="/admin/lab-manuals?dept=<%= encodeURIComponent(d) %>&sem=<%= activeSem %>"
+           class="lm-pill <%= activeDept===d?'lm-pill-active':'' %>">
+          <%= DEPT_META[d] ? DEPT_META[d].icon+' ' : '🏛️ ' %><%= d==='All'?'All Depts':d.split(' ').slice(0,2).join(' ') %>
+        </a>
+      <% }) %>
+    </div>
+  </div>
+  <!-- Semester filter -->
+  <div class="lm-filter-group">
+    <span class="lm-filter-label">Semester</span>
+    <div class="lm-filter-pills">
+      <% ['All',...SEMESTERS].forEach(s => { %>
+        <a href="/admin/lab-manuals?dept=<%= encodeURIComponent(activeDept) %>&sem=<%= s %>"
+           class="lm-pill lm-pill-sem <%= activeSem==s?'lm-pill-active':'' %>">
+          <%= s==='All' ? 'All Sem' : 'Sem '+s %>
+        </a>
+      <% }) %>
+    </div>
+  </div>
+</div>
+
+<!-- ── COUNT BADGE ── -->
+<div class="lm-count-row">
+  <span class="lm-count-badge"><%= manuals.length %> subject<%= manuals.length!==1?'s':'' %> found</span>
+  <% if (activeDept!=='All' && activeSem!=='All') { %>
+    <a href="/departments/<%= DEPT_META[activeDept]?DEPT_META[activeDept].slug:'' %>#lab-sem-<%= activeSem %>" target="_blank" class="lm-preview-link">👁 Preview public page ↗</a>
+  <% } %>
+</div>
+
+<!-- ── CONTENT ── -->
+<% if (manuals.length === 0) { %>
+  <div class="lm-empty">
+    <div style="font-size:3rem;margin-bottom:12px;">🔬</div>
+    <h3>No lab manuals yet</h3>
+    <p>Start by adding subject-wise lab manuals for any semester.</p>
+    <a href="/admin/lab-manuals/new" class="admin-btn admin-btn-primary" style="margin-top:16px;">+ Add First Lab Manual</a>
+  </div>
+<% } else { %>
+
+  <%
+    // Build display: if both dept & sem are active, flat list; otherwise group by dept
+    const showFlat = activeDept !== 'All' && activeSem !== 'All';
+  %>
+
+  <% if (showFlat) { %>
+    <!-- ── FLAT TABLE view when dept + sem are both selected ── -->
+    <div class="lm-table-wrap">
+      <table class="lm-table">
+        <thead>
+          <tr>
+            <th style="width:50px">#</th>
+            <th>Subject</th>
+            <th>Code</th>
+            <th>Year</th>
+            <th>PDF</th>
+            <th>Status</th>
+            <th style="width:120px">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% manuals.forEach((m, i) => { %>
+            <tr class="lm-tr">
+              <td class="lm-td-order"><%= i+1 %></td>
+              <td class="lm-td-subj">
+                <div class="lm-subj-name"><%= m.subjectName %></div>
+                <% if (m.description) { %><div class="lm-subj-desc"><%= m.description %></div><% } %>
+              </td>
+              <td>
+                <% if (m.subjectCode) { %><span class="lm-code-badge"><%= m.subjectCode %></span><% } else { %><span style="color:#cbd5e1">—</span><% } %>
+              </td>
+              <td class="lm-td-year"><%= m.academicYear || '—' %></td>
+              <td>
+                <% if (m.pdfUrl) { %>
+                  <a href="/download/lab-manual/<%= m._id %>" target="_blank" class="lm-pdf-link">📄 PDF</a>
+                <% } else { %>
+                  <span class="lm-no-pdf">No PDF</span>
+                <% } %>
+              </td>
+              <td>
+                <span class="lm-status-badge lm-status-<%= m.isActive?'active':'hidden' %>">
+                  <%= m.isActive ? '✅ Active' : '⏸ Hidden' %>
+                </span>
+              </td>
+              <td class="lm-td-actions">
+                <a href="/admin/lab-manuals/<%= m._id %>/edit" class="lm-btn-edit">✏️</a>
+                <form action="/admin/lab-manuals/<%= m._id %>?_method=DELETE" method="POST"
+                      onsubmit="return confirm('Delete «<%= m.subjectName %>»?')" style="display:inline">
+                  <button type="submit" class="lm-btn-del">🗑️</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+  <% } else { %>
+    <!-- ── GROUPED view when browsing all depts / all sems ── -->
+    <%
+      // Build groups: dept → sem → [manuals]
+      const groups = {};
+      manuals.forEach(m => {
+        if (!groups[m.department]) groups[m.department] = {};
+        if (!groups[m.department][m.semester]) groups[m.department][m.semester] = [];
+        groups[m.department][m.semester].push(m);
+      });
+    %>
+
+    <% Object.entries(groups).forEach(([dept, semMap]) => {
+      const meta = DEPT_META[dept] || {};
+    %>
+      <div class="lm-dept-group">
+        <div class="lm-dept-header">
+          <span class="lm-dept-icon" style="background:<%= meta.color||'#0a1628' %>"><%= meta.icon||'📚' %></span>
+          <span class="lm-dept-name"><%= dept %></span>
+          <a href="/admin/lab-manuals?dept=<%= encodeURIComponent(dept) %>&sem=All" class="lm-dept-filter-link">Filter this dept →</a>
+        </div>
+
+        <% Object.entries(semMap).sort((a,b)=>a[0]-b[0]).forEach(([sem, items]) => { %>
+          <div class="lm-sem-group">
+            <div class="lm-sem-label">
+              Semester <%= sem %>
+              <span class="lm-sem-count"><%= items.length %> subject<%= items.length!==1?'s':'' %></span>
+              <a href="/admin/lab-manuals?dept=<%= encodeURIComponent(dept) %>&sem=<%= sem %>" class="lm-sem-manage">Manage →</a>
+            </div>
+            <div class="lm-chips-row">
+              <% items.forEach(m => { %>
+                <div class="lm-chip-item">
+                  <span class="lm-chip-name"><%= m.subjectName %></span>
+                  <% if (m.pdfUrl) { %><span class="lm-chip-pdf">📄</span><% } else { %><span class="lm-chip-nopdf">—</span><% } %>
+                  <a href="/admin/lab-manuals/<%= m._id %>/edit" class="lm-chip-edit">✏️</a>
+                </div>
+              <% }) %>
+              <a href="/admin/lab-manuals/new?dept=<%= encodeURIComponent(dept) %>&sem=<%= sem %>" class="lm-chip-add">＋ Add</a>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% }) %>
+  <% } %>
+<% } %>
+
+<style>
+/* ── Filters ── */
+.lm-filters { display:flex; flex-direction:column; gap:14px; background:white; border:1px solid #e2e8f0; border-radius:14px; padding:18px 20px; margin-bottom:18px; }
+.lm-filter-group { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.lm-filter-label { font-family:'Space Mono',monospace; font-size:.65rem; font-weight:700; color:var(--gray); text-transform:uppercase; letter-spacing:.06em; white-space:nowrap; min-width:80px; }
+.lm-filter-pills { display:flex; flex-wrap:wrap; gap:6px; }
+.lm-pill { padding:5px 13px; border-radius:50px; border:1px solid #e2e8f0; background:white; font-size:.78rem; font-weight:600; color:var(--gray); text-decoration:none; transition:all .2s; }
+.lm-pill:hover { border-color:#cbd5e1; color:var(--navy); background:#f8fafc; }
+.lm-pill-active { background:var(--navy)!important; color:var(--accent)!important; border-color:var(--navy)!important; }
+.lm-pill-sem { font-family:'Space Mono',monospace; font-size:.7rem; }
+
+/* ── Count row ── */
+.lm-count-row { display:flex; align-items:center; gap:14px; margin-bottom:18px; }
+.lm-count-badge { background:rgba(10,22,40,.06); color:var(--navy); font-size:.78rem; font-weight:700; padding:4px 12px; border-radius:50px; font-family:'Space Mono',monospace; }
+.lm-preview-link { font-size:.78rem; color:var(--blue); font-weight:600; text-decoration:none; }
+.lm-preview-link:hover { color:var(--accent); }
+
+/* ── Empty ── */
+.lm-empty { text-align:center; background:white; border:2px dashed #e2e8f0; border-radius:16px; padding:48px 24px; color:var(--gray); }
+.lm-empty h3 { font-family:'Playfair Display',serif; color:var(--navy); margin-bottom:8px; }
+
+/* ── Flat table ── */
+.lm-table-wrap { background:white; border-radius:14px; border:1px solid #e2e8f0; overflow:hidden; }
+.lm-table { width:100%; border-collapse:collapse; }
+.lm-table thead { background:var(--navy); }
+.lm-table thead th { padding:12px 16px; text-align:left; font-family:'Space Mono',monospace; font-size:.65rem; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:.06em; }
+.lm-tr { border-bottom:1px solid #f1f5f9; transition:background .15s; }
+.lm-tr:last-child { border-bottom:none; }
+.lm-tr:hover { background:#fdfcf8; }
+.lm-tr td { padding:12px 16px; vertical-align:middle; }
+.lm-td-order { font-family:'Space Mono',monospace; font-size:.75rem; color:var(--gray); text-align:center; }
+.lm-td-subj { min-width:200px; }
+.lm-subj-name { font-size:.88rem; font-weight:700; color:var(--navy); }
+.lm-subj-desc { font-size:.72rem; color:var(--gray); margin-top:2px; }
+.lm-code-badge { background:rgba(26,58,107,.08); color:var(--navy); border:1px solid rgba(26,58,107,.15); border-radius:6px; padding:3px 8px; font-family:'Space Mono',monospace; font-size:.68rem; font-weight:700; }
+.lm-td-year { font-size:.78rem; color:var(--gray); font-family:'Space Mono',monospace; }
+.lm-pdf-link { color:var(--blue); font-size:.78rem; font-weight:700; text-decoration:none; }
+.lm-pdf-link:hover { color:var(--accent); }
+.lm-no-pdf { color:#cbd5e1; font-size:.75rem; font-style:italic; }
+.lm-status-badge { font-size:.72rem; font-weight:700; padding:3px 10px; border-radius:50px; white-space:nowrap; }
+.lm-status-active { background:rgba(5,150,105,.1); color:#065f46; }
+.lm-status-hidden { background:rgba(107,114,128,.1); color:#4b5563; }
+.lm-td-actions { display:flex; gap:6px; align-items:center; }
+.lm-btn-edit,.lm-btn-del { padding:5px 10px; border-radius:8px; border:1px solid #e2e8f0; background:white; cursor:pointer; font-size:.82rem; transition:all .2s; font-family:'DM Sans',sans-serif; }
+.lm-btn-edit:hover { background:#fef3c7; border-color:#d97706; }
+.lm-btn-del:hover  { background:#fee2e2; border-color:#dc2626; }
+
+/* ── Grouped view ── */
+.lm-dept-group { background:white; border:1px solid #e2e8f0; border-radius:14px; overflow:hidden; margin-bottom:16px; }
+.lm-dept-header { display:flex; align-items:center; gap:12px; padding:14px 20px; background:linear-gradient(135deg,var(--navy),#1a3a6b); }
+.lm-dept-icon { width:36px; height:36px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0; }
+.lm-dept-name { font-family:'Playfair Display',serif; font-size:.95rem; font-weight:800; color:white; flex:1; }
+.lm-dept-filter-link { font-size:.75rem; color:var(--accent); font-weight:700; text-decoration:none; }
+.lm-sem-group { padding:12px 20px 14px; border-bottom:1px solid #f1f5f9; }
+.lm-sem-group:last-child { border-bottom:none; }
+.lm-sem-label { display:flex; align-items:center; gap:10px; font-family:'Space Mono',monospace; font-size:.72rem; font-weight:700; color:var(--navy); margin-bottom:10px; }
+.lm-sem-count { background:rgba(10,22,40,.06); border-radius:50px; padding:2px 9px; font-size:.65rem; }
+.lm-sem-manage { color:var(--blue); font-weight:700; text-decoration:none; margin-left:auto; }
+.lm-chips-row { display:flex; flex-wrap:wrap; gap:8px; }
+.lm-chip-item { display:inline-flex; align-items:center; gap:6px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:5px 10px; font-size:.78rem; }
+.lm-chip-name { font-weight:600; color:var(--navy); }
+.lm-chip-pdf { color:var(--blue); }
+.lm-chip-nopdf { color:#cbd5e1; font-size:.72rem; }
+.lm-chip-edit { color:var(--gray); text-decoration:none; font-size:.8rem; }
+.lm-chip-edit:hover { color:var(--accent); }
+.lm-chip-add { display:inline-flex; align-items:center; padding:5px 12px; border:1.5px dashed #cbd5e1; border-radius:8px; font-size:.75rem; font-weight:700; color:#94a3b8; text-decoration:none; transition:all .2s; }
+.lm-chip-add:hover { border-color:var(--accent); color:var(--navy); background:rgba(212,168,67,.05); }
+</style>
+
+<%- include('layout-bottom') %>

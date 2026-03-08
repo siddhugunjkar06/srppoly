@@ -1,0 +1,197 @@
+<%- include('layout-top') %>
+
+<div class="admin-page-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;">
+  <div>
+    <h1>Faculty Management</h1>
+    <p>Add, edit, and manage all faculty members across departments</p>
+  </div>
+  <a href="/admin/faculty/new" class="admin-btn admin-btn-primary">+ Add Faculty</a>
+</div>
+
+<!-- Department Filter Tabs -->
+<div class="faculty-filter-tabs" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px;">
+  <% departments.forEach(dept => { %>
+    <a href="/admin/faculty?dept=<%= dept %>"
+       class="fac-tab-btn <%= activeDept === dept ? 'fac-tab-active' : '' %>">
+      <%= dept === 'All' ? '🏛️ All Departments' :
+          dept === 'Electrical Engineering' ? '⚡ Electrical' :
+          dept === 'Computer Engineering' ? '💻 Computer' :
+          dept === 'AI & Machine Learning' ? '🤖 AI & ML' :
+          dept === 'Electronics & Communication' ? '📡 Electronics' : '🔬 Sci & Hum' %>
+    </a>
+  <% }) %>
+</div>
+
+<!-- Faculty Count -->
+<div style="margin-bottom:20px;font-size:.85rem;color:var(--gray);">
+  Showing <strong style="color:var(--navy);"><%= faculty.length %></strong> faculty member<%= faculty.length !== 1 ? 's' : '' %>
+  <% if (activeDept !== 'All') { %> in <strong style="color:var(--navy);"><%= activeDept %></strong><% } %>
+</div>
+
+<% if (faculty && faculty.length > 0) { %>
+  <!-- Faculty Cards Grid -->
+  <div class="faculty-admin-grid">
+    <% faculty.forEach(member => { %>
+      <div class="faculty-admin-card">
+
+        <!-- Photo -->
+        <div class="fac-card-photo">
+          <% if (member.imageUrl) { %>
+            <img src="<%= member.imageUrl %>" alt="<%= member.name %>">
+          <% } else { %>
+            <div class="fac-photo-placeholder">
+              <%= member.name.charAt(0).toUpperCase() %>
+            </div>
+          <% } %>
+          <% if (member.isHOD) { %>
+            <span class="hod-badge">HOD</span>
+          <% } %>
+        </div>
+
+        <!-- Details -->
+        <div class="fac-card-body">
+          <h3 class="fac-name"><%= member.name %></h3>
+          <p class="fac-designation"><%= member.designation %></p>
+          <p class="fac-dept-tag">
+            <%= member.department === 'Electrical Engineering' ? '⚡' :
+                member.department === 'Computer Engineering' ? '💻' :
+                member.department === 'AI & Machine Learning' ? '🤖' :
+                member.department === 'Electronics & Communication' ? '📡' : '🔬' %>
+            <%= member.department %>
+          </p>
+
+          <div class="fac-meta-row">
+            <span class="fac-meta-item" title="Qualification">🎓 <%= member.qualification %></span>
+            <% if (member.experience) { %>
+              <span class="fac-meta-item" title="Experience">⏱️ <%= member.experience %></span>
+            <% } %>
+          </div>
+
+          <% if (member.specialization) { %>
+            <div class="fac-specialization">
+              <strong>Specialization:</strong> <%= member.specialization %>
+            </div>
+          <% } %>
+
+          <div class="fac-contact-row">
+            <% if (member.email) { %>
+              <a href="mailto:<%= member.email %>" class="fac-contact-link" title="<%= member.email %>">✉️ <%= member.email %></a>
+            <% } %>
+            <% if (member.phone) { %>
+              <a href="tel:<%= member.phone %>" class="fac-contact-link" title="<%= member.phone %>">📞 <%= member.phone %></a>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="fac-card-actions">
+          <a href="/admin/faculty/<%= member._id %>/edit" class="admin-btn admin-btn-secondary admin-btn-sm">
+            ✏️ Edit
+          </a>
+          <form action="/admin/faculty/<%= member._id %>?_method=DELETE" method="POST"
+                onsubmit="return confirm('Delete <%= member.name %>? This cannot be undone.')">
+            <button type="submit" class="admin-btn admin-btn-danger admin-btn-sm">
+              🗑️ Delete
+            </button>
+          </form>
+        </div>
+
+      </div>
+    <% }) %>
+  </div>
+
+<% } else { %>
+  <!-- Empty State -->
+  <div class="fac-empty-state">
+    <div class="fac-empty-icon">👨‍🏫</div>
+    <h3>No Faculty Members Yet</h3>
+    <p>
+      <% if (activeDept !== 'All') { %>
+        No faculty found in <strong><%= activeDept %></strong>. Try another department or
+      <% } else { %>
+        Get started by adding your first faculty member.
+      <% } %>
+    </p>
+    <a href="/admin/faculty/new" class="admin-btn admin-btn-primary" style="margin-top:16px;">
+      + Add First Faculty Member
+    </a>
+  </div>
+<% } %>
+
+<style>
+/* ── Faculty Filter Tabs ── */
+.fac-tab-btn {
+  padding: 8px 16px; border-radius: 50px; border: 1px solid #e2e8f0;
+  background: white; font-size: .82rem; font-weight: 500; cursor: pointer;
+  transition: all .2s; color: var(--gray); text-decoration: none; white-space: nowrap;
+}
+.fac-tab-btn:hover { background: #f1f5f9; border-color: #cbd5e1; color: var(--navy); }
+.fac-tab-active { background: var(--navy) !important; color: var(--accent) !important; border-color: var(--navy) !important; font-weight: 700 !important; }
+
+/* ── Faculty Admin Grid ── */
+.faculty-admin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+.faculty-admin-card {
+  background: white; border-radius: 16px; border: 1px solid #e2e8f0;
+  overflow: hidden; transition: all .3s; display: flex; flex-direction: column;
+}
+.faculty-admin-card:hover { border-color: var(--accent); box-shadow: 0 8px 24px rgba(10,22,40,.1); transform: translateY(-2px); }
+
+/* Photo section */
+.fac-card-photo {
+  position: relative; height: 160px; background: linear-gradient(135deg, var(--navy), var(--blue));
+  display: flex; align-items: center; justify-content: center;
+}
+.fac-card-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.fac-photo-placeholder {
+  width: 80px; height: 80px; background: rgba(255,255,255,.15);
+  border: 3px solid var(--accent); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--accent); font-weight: 900;
+}
+.hod-badge {
+  position: absolute; top: 12px; right: 12px;
+  background: linear-gradient(135deg, var(--accent), var(--gold));
+  color: var(--navy); font-size: .65rem; font-weight: 900;
+  padding: 3px 10px; border-radius: 50px; font-family: 'Space Mono', monospace;
+}
+
+/* Body */
+.fac-card-body { padding: 18px; flex: 1; }
+.fac-name { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 800; color: var(--navy); margin-bottom: 2px; }
+.fac-designation { font-size: .8rem; color: var(--accent); font-weight: 700; font-family: 'Space Mono', monospace; margin-bottom: 8px; }
+.fac-dept-tag { font-size: .75rem; color: var(--blue); background: rgba(26,58,107,.08); border: 1px solid rgba(26,58,107,.15); border-radius: 50px; padding: 3px 10px; display: inline-block; margin-bottom: 12px; font-weight: 600; }
+.fac-meta-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.fac-meta-item { font-size: .76rem; color: var(--gray); background: #f8fafc; border-radius: 6px; padding: 3px 8px; border: 1px solid #e2e8f0; }
+.fac-specialization { font-size: .76rem; color: var(--gray); background: rgba(212,168,67,.06); border: 1px solid rgba(212,168,67,.15); border-radius: 8px; padding: 6px 10px; margin-bottom: 10px; line-height: 1.5; }
+.fac-contact-row { display: flex; flex-direction: column; gap: 4px; }
+.fac-contact-link { font-size: .75rem; color: var(--blue); text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fac-contact-link:hover { color: var(--accent); }
+
+/* Actions */
+.fac-card-actions {
+  padding: 12px 18px; border-top: 1px solid #f1f5f9;
+  display: flex; gap: 8px; background: #fafbfc;
+}
+.fac-card-actions form { flex: 1; }
+.fac-card-actions .admin-btn { width: 100%; justify-content: center; }
+
+/* Empty State */
+.fac-empty-state {
+  text-align: center; padding: 80px 24px;
+  background: white; border-radius: 16px;
+  border: 2px dashed rgba(212,168,67,.25);
+}
+.fac-empty-icon { font-size: 4rem; margin-bottom: 16px; }
+.fac-empty-state h3 { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--navy); margin-bottom: 8px; }
+.fac-empty-state p { color: var(--gray); font-size: .9rem; }
+
+@media (max-width: 600px) {
+  .faculty-admin-grid { grid-template-columns: 1fr; }
+}
+</style>
+
+<%- include('layout-bottom') %>

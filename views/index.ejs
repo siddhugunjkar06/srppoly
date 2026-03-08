@@ -1,0 +1,536 @@
+<%- include('partials/head') %>
+<%- include('partials/navbar') %>
+
+<!-- FLASH MESSAGES -->
+<% if (success && success.length > 0) { %>
+  <div class="flash-success" id="flashMsg">
+    <span>✅ <%= success[0] %></span>
+    <button onclick="this.parentElement.style.display='none'">✕</button>
+  </div>
+<% } %>
+<% if (error && error.length > 0) { %>
+  <div class="flash-error" id="flashMsg">
+    <span>⚠️ <%= error[0] %></span>
+    <button onclick="this.parentElement.style.display='none'">✕</button>
+  </div>
+<% } %>
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<section class="hero" id="home">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-inner">
+    <div class="hero-content">
+      <div class="hero-badge">🏛️ AICTE Approved · Est. 2008</div>
+      <h1>Shape Your Future<br>with <em>Technical Excellence</em></h1>
+      <p><b>SRPP Polytechnic Institute</b> offers world-class diploma programs in engineering and technology, empowering students from rural Maharashtra to build extraordinary careers.</p>
+      <div class="hero-btns">
+        <a href="#admission" class="btn-primary">🎓 Apply for Admission</a>
+        <a href="#departments" class="btn-outline">Explore Programs →</a>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat"><span class="num" data-target="15">0</span><span class="label">Years of Excellence</span></div>
+        <div class="hero-stat"><span class="num" data-target="2000">0</span><span class="label">Alumni Network</span></div>
+        <div class="hero-stat"><span class="num" data-target="95">0</span><span class="label">% Placement Rate</span></div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="float-badge"><span class="year">A+</span>MSBTE<br>RATED</div>
+      <div class="hero-card">
+        <div class="hero-card-title"><span>🎓</span> Our Programs</div>
+        <ul class="dept-list">
+          <li class="dept-item"><div class="dept-icon">⚡</div><div><div class="dept-name">Electrical Engineering</div><div class="dept-seats">60 Seats · 3 Years</div></div></li>
+          <li class="dept-item"><div class="dept-icon">💻</div><div><div class="dept-name">Computer Engineering</div><div class="dept-seats">60 Seats · 3 Years</div></div></li>
+          <li class="dept-item"><div class="dept-icon">🤖</div><div><div class="dept-name">AI & Machine Learning</div><div class="dept-seats">60 Seats · 3 Years</div></div></li>
+          <li class="dept-item"><div class="dept-icon">📡</div><div><div class="dept-name">Electronics & Comm.</div><div class="dept-seats">30 Seats · 3 Years</div></div></li>
+        </ul>
+        <div class="hero-accred">
+          <div class="accred-tag"><strong>DTE</strong>Code: 2631</div>
+          <div class="accred-tag"><strong>MSBTE</strong>Code: 51305</div>
+          <div class="accred-tag"><strong>AICTE</strong>Approved</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="scroll-hint">SCROLL</div>
+</section>
+
+<!-- ═══════════════════════ TICKER ═══════════════════════ -->
+<div class="ticker">
+  <div class="ticker-wrap" id="tickerWrap">
+    <% if (notices && notices.length > 0) { %>
+      <% notices.forEach(n => { %>
+        <div class="ticker-item"><%= n.isImportant ? '🔴' : '📌' %> <%= n.title %></div>
+      <% }) %>
+    <% } else { %>
+      <div class="ticker-item">🎓 Admissions Open for 2024-25 Academic Year</div>
+      <div class="ticker-item">📣 MSBTE Examination Results Declared</div>
+      <div class="ticker-item">🏆 SRPP Students Win State-Level Technical Competition</div>
+      <div class="ticker-item">📚 New AI & Machine Learning Course Launched</div>
+      <div class="ticker-item">🤝 Campus Placement Drive — Top Companies Visiting</div>
+    <% } %>
+    <!-- duplicate for seamless loop -->
+    <% if (notices && notices.length > 0) { %>
+      <% notices.forEach(n => { %>
+        <div class="ticker-item"><%= n.isImportant ? '🔴' : '📌' %> <%= n.title %></div>
+      <% }) %>
+    <% } else { %>
+      <div class="ticker-item">🎓 Admissions Open for 2024-25 Academic Year</div>
+      <div class="ticker-item">📣 MSBTE Examination Results Declared</div>
+      <div class="ticker-item">🏆 SRPP Students Win State-Level Technical Competition</div>
+    <% } %>
+  </div>
+</div>
+
+<!-- ═══════════════════════ STATS ═══════════════════════ -->
+<section class="stats-section">
+  <div class="section-inner">
+    <div class="stats-grid">
+      <div class="stat-box fade-in"><div class="stat-num" data-target="15">0</div><div class="stat-label">Years of Excellence</div></div>
+      <div class="stat-box fade-in"><div class="stat-num" data-target="5">0</div><div class="stat-label">Departments</div></div>
+      <div class="stat-box fade-in"><div class="stat-num" data-target="2000">0</div><div class="stat-label">Alumni Across India</div></div>
+      <div class="stat-box fade-in"><div class="stat-num" data-target="95">0</div><div class="stat-label">% Placement Rate</div></div>
+      <div class="stat-box fade-in"><div class="stat-num" data-target="50">0</div><div class="stat-label">Expert Faculty</div></div>
+      <div class="stat-box fade-in"><div class="stat-num" data-target="25">0</div><div class="stat-label">Industry Partners</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ ABOUT ═══════════════════════ -->
+<section class="about" id="about">
+  <div class="section-inner">
+    <div class="about-grid">
+      <div class="about-img-wrap fade-in">
+        <div class="about-img-main">
+          <img src="/images/banner.png" alt="SRPP Campus" onerror="this.style.display='none'">
+        </div>
+        <div class="about-img-accent">
+          <div class="big">5+</div>
+          <div style="font-size:.75rem;font-weight:600;color:var(--navy);">Years of<br>Excellence</div>
+        </div>
+      </div>
+      <div class="about-content fade-in">
+        <div class="section-label">About Our Institute</div>
+        <h2 class="section-title">SHRI RAMKRISHNA PARAMHANS POLYTECHNIC INSTITUTE</h2>
+        <p class="about-lead">Parivartan Gramin Vikas Mahila Va Shikshan Mandal Established in 1995, Honourable Founder President Mr. Abhijeet Solunke, Established First College In 2008, SRPP Polytechnic Institute is a flagship institution dedicated to providing world-class technical education to students from rural backgrounds. Their Journey Of Providing Quality Education. The Society Has Kept Its Educational Graph Moving Up And Up Towards The Sky.</p>
+        <p class="about-body">Our AICTE-approved programs blend theoretical knowledge with hands-on practical training, ensuring our graduates are industry-ready from day one. With modern labs, experienced faculty, and strong industry connections, we've built a legacy of excellence.</p>
+        <div class="about-features">
+          <div class="about-feat"><span class="feat-icon">🏛️</span><div><strong>AICTE Approved</strong><p>Recognized by All India Council for Technical Education</p></div></div>
+          <div class="about-feat"><span class="feat-icon">🎓</span><div><strong>MSBTE Affiliated</strong><p>Maharashtra State Board of Technical Education</p></div></div>
+          <div class="about-feat"><span class="feat-icon">🔬</span><div><strong>Modern Labs</strong><p>State-of-the-art equipment and research facilities</p></div></div>
+          <div class="about-feat"><span class="feat-icon">💼</strong><p>Strong industry placement network across Maharashtra</p></div></div>
+        </div>
+        <a href="#admission" class="btn-primary" style="margin-top:28px;display:inline-flex;">Apply for Admission →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ DEPARTMENTS ═══════════════════════ -->
+<section id="departments" style="background:var(--white);">
+  <div class="section-inner">
+    <div style="text-align:center;margin-bottom:52px;">
+      <div class="section-label" style="justify-content:center;">Academic Programs</div>
+      <h2 class="section-title">Our Departments</h2>
+      <p class="section-sub" style="margin:0 auto;">Industry-aligned diploma programs designed to make you job-ready in today's fast-evolving tech landscape.</p>
+    </div>
+    <div class="dept-cards">
+      
+      <div class="dept-card fade-in">
+        <a href="/departments/electrical-engineering">
+        <div class="dept-card-icon" style="background:linear-gradient(135deg,#1a3a6b,#0a1628)">⚡</div>
+        <h3>Electrical Engineering</h3>
+        <p>Master power systems, control technology, and electrical installations. High demand across industries.</p>
+        <div class="dept-meta"><span>📅 3 Years</span><span>🪑 60 Seats</span><span>📋 MSBTE Affiliated</span></div>
+        <div class="dept-subjects"><strong>Key Subjects:</strong> Power Electronics, PLC, Electrical Machines, Circuit Theory</div>
+        <a href="#admission" class="dept-apply">Apply Now →</a>
+      </div>
+      </a>
+      
+      <div class="dept-card fade-in">
+        <a href="/departments/computer-engineering">
+        <div class="dept-card-icon" style="background:linear-gradient(135deg,#1a5c1a,#0d3b0d)">💻</div>
+        <h3>Computer Engineering</h3>
+        <p>Build software, networks, and systems. The most sought-after diploma program in today's digital world.</p>
+        <div class="dept-meta"><span>📅 3 Years</span><span>🪑 60 Seats</span><span>📋 MSBTE Affiliated</span></div>
+        <div class="dept-subjects"><strong>Key Subjects:</strong> Web Dev, Database, Java, Networking, OS</div>
+        <a href="#admission" class="dept-apply">Apply Now →</a>
+      </div>
+      </a>
+      
+      <div class="dept-card fade-in">
+        <a href="/departments/ai-machine-learning">
+        <div class="dept-card-icon" style="background:linear-gradient(135deg,#5c1a5c,#3b0d3b)">🤖</div>
+        <h3>AI & Machine Learning</h3>
+        <p>Step into the future. Learn Python, neural networks, and data science in our cutting-edge AI program.</p>
+        <div class="dept-meta"><span>📅 3 Years</span><span>🪑 60 Seats</span><span>📋 MSBTE Affiliated</span></div>
+        <div class="dept-subjects"><strong>Key Subjects:</strong> Python, ML, Deep Learning, Data Analytics, IoT</div>
+        <a href="#admission" class="dept-apply">Apply Now →</a>
+      </div>
+      </a>
+      
+      <div class="dept-card fade-in">
+        <a href="/departments/electronics-communication">
+        <div class="dept-card-icon" style="background:linear-gradient(135deg,#5c3a1a,#3b1f0d)">📡</div>
+        <h3>Electronics & Comm.</h3>
+        <p>Design circuits, communication systems, and embedded technology powering the connected world.</p>
+        <div class="dept-meta"><span>📅 3 Years</span><span>🪑 30 Seats</span><span>📋 MSBTE Affiliated</span></div>
+        <div class="dept-subjects"><strong>Key Subjects:</strong> Microprocessors, VLSI, Telecom, Embedded Systems</div>
+        <a href="#admission" class="dept-apply">Apply Now →</a>
+      </div>
+      </a>
+      <div class="dept-card fade-in">
+        <div class="dept-card-icon" style="background:linear-gradient(135deg,#1a4a5c,#0d2b3b)">🔬</div>
+        <h3>Science & Humanities</h3>
+        <p>The foundational department supporting all engineering programs with core sciences and communication skills.</p>
+        <div class="dept-meta"><span>📅 Support Dept.</span><span>🪑 All Students</span><span>📋 Core Department</span></div>
+        <div class="dept-subjects"><strong>Key Subjects:</strong> Physics, Chemistry, Maths, English, Engineering Drawing</div>
+        <a href="#admission" class="dept-apply">Learn More →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ NOTICES ═══════════════════════ -->
+<section id="notices" style="background:var(--light);">
+  <div class="section-inner">
+    <div class="notices-header">
+      <div>
+        <div class="section-label">Latest Updates</div>
+        <h2 class="section-title">Notices & Announcements</h2>
+      </div>
+      <a href="/notices" class="btn-outline" style="color:var(--navy);border-color:var(--navy);">View All Notices →</a>
+    </div>
+    <div class="notices-grid">
+      <% if (notices && notices.length > 0) { %>
+        <% notices.slice(0, 6).forEach(notice => { %>
+          <div class="notice-card fade-in">
+            <div class="notice-meta">
+              <span class="notice-cat notice-cat-<%= notice.category.toLowerCase() %>"><%= notice.category %></span>
+              <% if (notice.isNew) { %><span class="notice-new">NEW</span><% } %>
+              <% if (notice.isImportant) { %><span class="notice-important">⚠️ Important</span><% } %>
+            </div>
+            <h4 class="notice-title"><%= notice.title %></h4>
+            <p class="notice-body"><%= notice.content.substring(0, 120) %><%= notice.content.length > 120 ? '...' : '' %></p>
+            <div class="notice-date">📅 <%= new Date(notice.publishedAt).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'}) %></div>
+          </div>
+        <% }) %>
+      <% } else { %>
+        <div class="notice-card fade-in">
+          <div class="notice-meta"><span class="notice-cat notice-cat-admission">Admission</span><span class="notice-new">NEW</span></div>
+          <h4 class="notice-title">Admissions Open for 2024-25 Academic Year</h4>
+          <p class="notice-body">Applications are now being accepted for all diploma programs for the upcoming academic year. Limited seats available.</p>
+          <div class="notice-date">📅 1 Jan 2024</div>
+        </div>
+        <div class="notice-card fade-in">
+          <div class="notice-meta"><span class="notice-cat notice-cat-examination">Examination</span></div>
+          <h4 class="notice-title">MSBTE Winter 2023 Results Declared</h4>
+          <p class="notice-body">MSBTE has declared the Winter 2023 examination results. Students can check results on the official MSBTE website.</p>
+          <div class="notice-date">📅 20 Dec 2023</div>
+        </div>
+        <div class="notice-card fade-in">
+          <div class="notice-meta"><span class="notice-cat notice-cat-event">Event</span><span class="notice-new">NEW</span></div>
+          <h4 class="notice-title">Annual Technical Fest — TechVision 2024</h4>
+          <p class="notice-body">Register for SRPP's annual technical festival featuring competitions, workshops, and industry guest lectures.</p>
+          <div class="notice-date">📅 15 Feb 2024</div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ FACULTY ═══════════════════════ -->
+<section id="faculty" style="background:var(--white);">
+  <div class="section-inner">
+    <div style="text-align:center;margin-bottom:52px;">
+      <div class="section-label" style="justify-content:center;">Meet the Team</div>
+      <h2 class="section-title">Our Expert Faculty</h2>
+      <p class="section-sub" style="margin:0 auto;">Experienced educators and industry professionals dedicated to shaping the next generation of engineers.</p>
+    </div>
+
+    <% if (faculty && faculty.length > 0) { %>
+      <div class="faculty-grid">
+        <% faculty.forEach(member => { %>
+          <div class="faculty-card fade-in">
+
+            <!-- Photo -->
+            <% if (member.imageUrl) { %>
+              <img
+                src="<%= member.imageUrl %>"
+                alt="<%= member.name %>"
+                class="faculty-avatar"
+                style="object-fit:cover;border:3px solid var(--accent);"
+              >
+            <% } else { %>
+              <div class="faculty-avatar"
+                style="background:linear-gradient(135deg,var(--navy),var(--blue));font-size:2rem;display:flex;align-items:center;justify-content:center;">
+                <%= member.name.charAt(0).toUpperCase() %>
+              </div>
+            <% } %>
+
+            <div class="faculty-info">
+              <h4><%= member.name %></h4>
+              <p class="faculty-dept"><%= member.designation %></p>
+              <p class="faculty-exp"><%= member.qualification %><%= member.experience ? ' · ' + member.experience : '' %></p>
+              <% if (member.specialization) { %>
+                <div class="faculty-tags">
+                  <% member.specialization.split(',').slice(0,2).forEach(s => { %>
+                    <span><%= s.trim() %></span>
+                  <% }) %>
+                </div>
+              <% } %>
+              <% if (member.isHOD) { %>
+                <span style="display:inline-block;margin-top:8px;padding:3px 10px;background:linear-gradient(135deg,var(--accent),var(--gold));border-radius:50px;font-size:.65rem;font-weight:900;color:var(--navy);font-family:'Space Mono',monospace;">HEAD OF DEPARTMENT</span>
+              <% } %>
+            </div>
+
+          </div>
+        <% }) %>
+      </div>
+
+    <% } else { %>
+      <!-- Fallback static cards when no faculty in DB yet -->
+      <div class="faculty-grid">
+        <div class="faculty-card fade-in">
+          <div class="faculty-avatar" style="background:linear-gradient(135deg,var(--navy),var(--blue))">👨‍🏫</div>
+          <div class="faculty-info">
+            <h4>Dr. Ramesh Patil</h4>
+            <p class="faculty-dept">Principal & HOD — Electrical</p>
+            <p class="faculty-exp">M.Tech, Ph.D · 20+ Years Experience</p>
+            <div class="faculty-tags"><span>Power Systems</span><span>PLC</span></div>
+          </div>
+        </div>
+        <div class="faculty-card fade-in">
+          <div class="faculty-avatar" style="background:linear-gradient(135deg,#1a5c1a,#0d3b0d)">👩‍💻</div>
+          <div class="faculty-info">
+            <h4>Prof. Priya Kulkarni</h4>
+            <p class="faculty-dept">HOD — Computer Engineering</p>
+            <p class="faculty-exp">M.E. Computer Science · 15+ Years</p>
+            <div class="faculty-tags"><span>Web Dev</span><span>Java</span></div>
+          </div>
+        </div>
+        <div class="faculty-card fade-in">
+          <div class="faculty-avatar" style="background:linear-gradient(135deg,#5c1a5c,#3b0d3b)">👨‍🔬</div>
+          <div class="faculty-info">
+            <h4>Prof. Anil Deshmukh</h4>
+            <p class="faculty-dept">HOD — AI & Machine Learning</p>
+            <p class="faculty-exp">M.Tech AI · 12+ Years Experience</p>
+            <div class="faculty-tags"><span>Python</span><span>ML</span></div>
+          </div>
+        </div>
+        <div class="faculty-card fade-in">
+          <div class="faculty-avatar" style="background:linear-gradient(135deg,#5c3a1a,#3b1f0d)">👩‍🔬</div>
+          <div class="faculty-info">
+            <h4>Prof. Sunita Gaikwad</h4>
+            <p class="faculty-dept">HOD — Electronics & Comm.</p>
+            <p class="faculty-exp">M.E. Electronics · 18+ Years</p>
+            <div class="faculty-tags"><span>VLSI</span><span>Embedded</span></div>
+          </div>
+        </div>
+      </div>
+    <% } %>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════ GALLERY ═══════════════════════ -->
+<section id="gallery" style="background:var(--light);">
+  <div class="section-inner">
+    <div style="text-align:center;margin-bottom:36px;">
+      <div class="section-label" style="justify-content:center;">Campus Life</div>
+      <h2 class="section-title">Photo Gallery</h2>
+      <p class="section-sub" style="margin:0 auto;">A glimpse into life at SRPP — our labs, events, sports, and more.</p>
+    </div>
+
+    <div class="gallery-tabs" id="galleryTabs">
+      <button class="tab-btn active" onclick="filterGallery('all',this)">All</button>
+      <button class="tab-btn" onclick="filterGallery('campus',this)">Campus</button>
+      <button class="tab-btn" onclick="filterGallery('labs',this)">Labs</button>
+      <button class="tab-btn" onclick="filterGallery('events',this)">Events</button>
+      <button class="tab-btn" onclick="filterGallery('sports',this)">Sports</button>
+      <button class="tab-btn" onclick="filterGallery('achievements',this)">Achievements</button>
+      <button class="tab-btn" onclick="filterGallery('cultural',this)">Cultural</button>
+    </div>
+
+    <% if (gallery && gallery.length > 0) { %>
+      <div class="gallery-grid" id="galleryGrid">
+        <% gallery.forEach(img => { %>
+          <div class="gallery-item fade-in" data-cat="<%= img.category.toLowerCase() %>">
+            <div class="gallery-thumb" style="background:#1a2a4a;">
+              <img
+                src="<%= img.imageUrl %>"
+                alt="<%= img.title %>"
+                loading="lazy"
+                style="width:100%;height:100%;object-fit:cover;display:block;"
+                onerror="this.parentElement.innerHTML='<span style=font-size:2rem>🖼️</span>'"
+              >
+              <div class="gallery-overlay">
+                <%= img.title %>
+                <% if (img.description) { %>
+                  <span style="font-size:.72rem;opacity:.8;display:block;margin-top:3px;"><%= img.description.substring(0,60) %></span>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+
+    <% } else { %>
+      <!-- Fallback static gallery when no images in DB -->
+      <div class="gallery-grid">
+        <div class="gallery-item fade-in" data-cat="campus"><div class="gallery-thumb"><span>🏛️</span><div class="gallery-overlay">Main Building</div></div></div>
+        <div class="gallery-item fade-in" data-cat="labs"><div class="gallery-thumb"><span>💻</span><div class="gallery-overlay">Computer Lab</div></div></div>
+        <div class="gallery-item fade-in" data-cat="labs"><div class="gallery-thumb"><span>⚡</span><div class="gallery-overlay">Electrical Lab</div></div></div>
+        <div class="gallery-item fade-in" data-cat="events"><div class="gallery-thumb"><span>🎓</span><div class="gallery-overlay">Convocation</div></div></div>
+        <div class="gallery-item fade-in" data-cat="sports"><div class="gallery-thumb"><span>🏏</span><div class="gallery-overlay">Sports Day</div></div></div>
+        <div class="gallery-item fade-in" data-cat="events"><div class="gallery-thumb"><span>🤖</span><div class="gallery-overlay">TechFest</div></div></div>
+      </div>
+    <% } %>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════ ADMISSION ═══════════════════════ -->
+<section id="admission" style="background:var(--navy);">
+  <div class="section-inner">
+    <div style="text-align:center;margin-bottom:52px;">
+      <div class="section-label" style="justify-content:center;color:var(--accent);">Admissions 2024–25</div>
+      <h2 class="section-title light">Apply for Admission</h2>
+      <p class="section-sub light" style="margin:0 auto;">Fill in your details below and our admissions team will contact you within 24 hours.</p>
+    </div>
+    <div class="admission-form-wrap fade-in">
+      <form class="admission-form" id="admissionForm" action="/enquiry" method="POST">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>First Name *</label>
+            <input type="text" name="fname" id="fname" placeholder="First name" required>
+          </div>
+          <div class="form-group">
+            <label>Last Name</label>
+            <input type="text" name="lname" id="lname" placeholder="Last name">
+          </div>
+          <div class="form-group">
+            <label>Email *</label>
+            <input type="email" name="email" id="email" placeholder="your@email.com" required>
+          </div>
+          <div class="form-group">
+            <label>Phone *</label>
+            <input type="tel" name="phone" id="phone" placeholder="+91 XXXXX XXXXX" required>
+          </div>
+          <div class="form-group">
+            <label>Department *</label>
+            <select name="dept" id="dept" required>
+              <option value="">Select Department</option>
+              <option>Electrical Engineering</option>
+              <option>Computer Engineering</option>
+              <option>AI & Machine Learning</option>
+              <option>Electronics & Communication</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>10th Marks %</label>
+            <input type="text" name="marks" id="marks" placeholder="e.g. 75%">
+          </div>
+          <div class="form-group">
+            <label>Category</label>
+            <select name="category">
+              <option>General</option>
+              <option>OBC</option>
+              <option>SC</option>
+              <option>ST</option>
+              <option>NT</option>
+              <option>EWS</option>
+            </select>
+          </div>
+          <div class="form-group form-full">
+            <label>Message (Optional)</label>
+            <textarea name="message" placeholder="Any questions or special requirements?" style="min-height:90px;"></textarea>
+          </div>
+        </div>
+        <button type="submit" class="submit-btn" id="enquirySubmitBtn">Submit Enquiry →</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ CONTACT ═══════════════════════ -->
+<section id="contact" style="background:var(--light);">
+  <div class="section-inner">
+    <div style="text-align:center;margin-bottom:52px;">
+      <div class="section-label" style="justify-content:center;">Get In Touch</div>
+      <h2 class="section-title">Contact Us</h2>
+    </div>
+    <div class="contact-grid">
+      <div>
+        <div class="contact-item fade-in">
+          <div class="contact-icon"><i class="fa-solid fa-phone"></i></div>
+          <div class="contact-detail"><h4>Phone</h4><p><a href="tel:+919049371961">+91 90493 71961</a></p></div>
+        </div>
+        <div class="contact-item fade-in">
+          <div class="contact-icon"><i class="fa-solid fa-location-dot"></i></div>
+          <div class="contact-detail"><h4>Address</h4><p>NH-61, Pathri Road, Hasnapur, Parbhani, Maharashtra</p></div>
+        </div>
+        <div class="contact-item fade-in">
+          <div class="contact-icon"><i class="fa-regular fa-envelope"></i></div>
+          <div class="contact-detail"><h4>Email</h4><p><a href="mailto:srppoly007@gmail.com">srppoly007@gmail.com</a></p></div>
+        </div>
+        <div class="contact-item fade-in">
+          <div class="contact-icon"><i class="fa-regular fa-calendar-check"></i></div>
+          <div class="contact-detail"><h4>Office Hours</h4><p>Monday – Saturday: 9:00 AM – 5:00 PM<br>Sunday: Closed</p></div>
+        </div>
+      </div>
+      <div class="fade-in">
+        <div class="map-embed">
+          <div class="map-header"><span>📍 NH-61, Pathri Road, Hasnapur, Parbhani</span></div>
+          <div class="map-placeholder">
+            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d559.7255261479693!2d76.67325680627958!3d19.309765798850677!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bd0110fb11d7b4d%3A0x5e4e5ca54ebead74!2sRamkrishna%20Paramhans%20College%20Of%20Pharmacy%20Hasnapur!5e0!3m2!1sen!2sin!4v1772929691998!5m2!1sen!2sin" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ CONTACT FORM ═══════════════════════ -->
+<section class="contact-form-section">
+  <div class="contact-form-inner">
+    <div class="section-label" style="justify-content:center;">Send Us a Message</div>
+    <h2 class="section-title" style="text-align:center;">We're Listening</h2>
+    <div class="contact-form fade-in">
+      <form id="contactForm" action="/contact" method="POST">
+        <div class="form-grid" style="margin-bottom:14px;">
+          <div class="form-group">
+            <label>Full Name *</label>
+            <input type="text" name="c_name" id="c_name" placeholder="Your full name" required>
+          </div>
+          <div class="form-group">
+            <label>Email *</label>
+            <input type="email" name="c_email" id="c_email" placeholder="your@email.com" required>
+          </div>
+          <div class="form-group">
+            <label>Phone</label>
+            <input type="tel" name="c_phone" id="c_phone" placeholder="+91 XXXXX XXXXX">
+          </div>
+          <div class="form-group">
+            <label>Subject</label>
+            <select name="c_subject" id="c_subject">
+              <option>Admission Enquiry</option>
+              <option>Fee Structure</option>
+              <option>Scholarship</option>
+              <option>Faculty / Academic</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="form-group form-full">
+            <label>Your Message *</label>
+            <textarea name="c_message" id="c_message" placeholder="Write your detailed message here..." style="min-height:120px;" required></textarea>
+          </div>
+        </div>
+        <button type="submit" class="submit-btn">Send Message →</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

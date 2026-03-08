@@ -1,0 +1,186 @@
+<%- include('layout-top') %>
+
+<div class="admin-page-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;">
+  <div>
+    <h1>Grievances &amp; Committees</h1>
+    <p>Manage grievance cells and their downloadable PDF documents shown on the website</p>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+    <a href="/grievances" target="_blank" class="admin-btn admin-btn-secondary">🌐 View Public Page</a>
+    <a href="/admin/grievances/new" class="admin-btn admin-btn-primary">+ Add Committee</a>
+  </div>
+</div>
+
+<% if (grievances && grievances.length > 0) { %>
+
+  <!-- Summary strip -->
+  <div class="griev-summary">
+    <span>Total: <strong><%= grievances.length %></strong> committees</span>
+    <span>With PDF: <strong><%= grievances.filter(g => g.pdfUrl).length %></strong></span>
+    <span>Active: <strong><%= grievances.filter(g => g.isActive).length %></strong></span>
+  </div>
+
+  <!-- Table -->
+  <div class="ga-table-wrap">
+    <table class="ga-table">
+      <thead>
+        <tr>
+          <th style="width:70px;text-align:center;">Sr. No</th>
+          <th>Committee / Cell Name</th>
+          <th style="width:120px;text-align:center;">PDF</th>
+          <th style="width:100px;text-align:center;">Status</th>
+          <th style="width:140px;text-align:center;">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="grievancesTbody">
+        <% grievances.forEach((g, i) => { %>
+          <tr class="ga-row" data-id="<%= g._id %>">
+
+            <!-- Sr No -->
+            <td style="text-align:center;">
+              <span class="ga-sr-badge"><%= g.srNo %></span>
+            </td>
+
+            <!-- Name -->
+            <td>
+              <div class="ga-name"><%= g.name %></div>
+              <% if (g.description) { %>
+                <div class="ga-desc"><%= g.description.substring(0, 80) %><%= g.description.length > 80 ? '…' : '' %></div>
+              <% } %>
+            </td>
+
+            <!-- PDF -->
+            <td style="text-align:center;">
+              <% if (g.pdfUrl) { %>
+                <a href="/download/grievance/<%= g._id %>" target="_blank" class="ga-pdf-btn" title="<%= g.pdfName || 'View PDF' %>">
+                  📄 View PDF
+                </a>
+              <% } else { %>
+                <span class="ga-no-pdf">No PDF</span>
+              <% } %>
+            </td>
+
+            <!-- Status -->
+            <td style="text-align:center;">
+              <span class="ga-status-badge <%= g.isActive ? 'ga-active' : 'ga-inactive' %>">
+                <%= g.isActive ? '✅ Active' : '⏸ Hidden' %>
+              </span>
+            </td>
+
+            <!-- Actions -->
+            <td>
+              <div style="display:flex;gap:6px;justify-content:center;">
+                <a href="/admin/grievances/<%= g._id %>/edit"
+                   class="admin-btn admin-btn-secondary admin-btn-sm" title="Edit">✏️</a>
+                <form action="/admin/grievances/<%= g._id %>?_method=DELETE" method="POST"
+                      onsubmit="return confirm('Delete &quot;<%= g.name %>&quot;? This cannot be undone.')">
+                  <button type="submit" class="admin-btn admin-btn-danger admin-btn-sm" title="Delete">🗑️</button>
+                </form>
+              </div>
+            </td>
+
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Preview of how public page looks -->
+  <div class="ga-preview-box">
+    <h3 style="font-family:'Playfair Display',serif;color:var(--navy);margin-bottom:18px;font-size:1rem;">
+      👁️ Public Page Preview
+    </h3>
+    <div class="ga-preview-table-wrap">
+      <table class="ga-preview-table">
+        <thead>
+          <tr>
+            <th>Sr. No</th>
+            <th>Name</th>
+            <th>Download PDF</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% grievances.filter(g => g.isActive).forEach(g => { %>
+            <tr>
+              <td style="text-align:center;"><strong><%= g.srNo %></strong></td>
+              <td><strong><%= g.name %></strong></td>
+              <td style="text-align:center;">
+                <% if (g.pdfUrl) { %>
+                  <span style="color:#16a34a;font-size:.78rem;font-weight:700;">⬇ Available</span>
+                <% } else { %>
+                  <span style="color:#94a3b8;font-size:.75rem;">—</span>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+<% } else { %>
+  <div class="griev-admin-empty">
+    <div style="font-size:3.5rem;margin-bottom:16px;">⚖️</div>
+    <h3>No Committees Added Yet</h3>
+    <p>Add the 7 standard grievance cells as per AICTE norms.</p>
+    <div class="griev-seed-list">
+      <p style="font-size:.82rem;color:var(--gray);margin-bottom:12px;font-weight:600;">Suggested entries:</p>
+      <% ['Anti-Ragging Cell','SC/ST Redressal Committee','Gender Sensitization','Women\'s Grievances Redressal Cell','Student Grievances Redressal Cell','Grievances Redressal Committee - GRC','Anti Harassment Committee'].forEach((name, i) => { %>
+        <span class="griev-seed-chip"><%= i+1 %>. <%= name %></span>
+      <% }) %>
+    </div>
+    <a href="/admin/grievances/new" class="admin-btn admin-btn-primary" style="margin-top:20px;">+ Add First Committee</a>
+  </div>
+<% } %>
+
+<style>
+/* Summary strip */
+.griev-summary {
+  display:flex; gap:20px; flex-wrap:wrap;
+  background:white; border-radius:12px; border:1px solid #e2e8f0;
+  padding:14px 20px; margin-bottom:20px; font-size:.85rem; color:var(--gray);
+}
+.griev-summary strong { color:var(--navy); }
+
+/* Table */
+.ga-table-wrap { background:white; border-radius:16px; border:1px solid #e2e8f0; overflow:hidden; box-shadow:0 2px 16px rgba(10,22,40,.06); margin-bottom:28px; }
+.ga-table { width:100%; border-collapse:collapse; }
+.ga-table thead { background:linear-gradient(135deg,var(--navy),#1a3366); }
+.ga-table th { padding:14px 18px; text-align:left; font-family:'Space Mono',monospace; font-size:.68rem; font-weight:700; color:var(--accent); letter-spacing:.06em; text-transform:uppercase; }
+.ga-row { border-bottom:1px solid #f1f5f9; transition:background .15s; }
+.ga-row:last-child { border-bottom:none; }
+.ga-row:hover { background:#fefdf8; }
+.ga-table td { padding:16px 18px; vertical-align:middle; }
+.ga-sr-badge { display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; background:linear-gradient(135deg,var(--navy),var(--blue)); color:var(--accent); border-radius:50%; font-family:'Space Mono',monospace; font-size:.8rem; font-weight:700; }
+.ga-name { font-family:'Playfair Display',serif; font-size:.95rem; font-weight:700; color:var(--navy); }
+.ga-desc { font-size:.75rem; color:var(--gray); margin-top:3px; }
+.ga-pdf-btn { display:inline-flex; align-items:center; gap:5px; padding:5px 12px; background:rgba(26,58,107,.08); color:var(--blue); border-radius:50px; font-size:.75rem; font-weight:700; text-decoration:none; border:1px solid rgba(26,58,107,.15); transition:all .2s; }
+.ga-pdf-btn:hover { background:var(--blue); color:white; }
+.ga-no-pdf { font-size:.72rem; color:#94a3b8; font-style:italic; }
+.ga-status-badge { font-size:.72rem; font-weight:700; padding:4px 10px; border-radius:50px; font-family:'Space Mono',monospace; }
+.ga-active   { background:rgba(22,163,74,.1); color:#15803d; }
+.ga-inactive { background:rgba(100,116,139,.1); color:#64748b; }
+
+/* Preview box */
+.ga-preview-box { background:white; border-radius:16px; border:1px solid #e2e8f0; padding:24px; margin-bottom:24px; }
+.ga-preview-table-wrap { overflow-x:auto; }
+.ga-preview-table { width:100%; border-collapse:collapse; font-size:.82rem; }
+.ga-preview-table th { background:#f8fafc; padding:10px 16px; text-align:left; font-weight:700; color:var(--navy); border-bottom:2px solid #e2e8f0; font-size:.75rem; text-transform:uppercase; letter-spacing:.04em; font-family:'Space Mono',monospace; }
+.ga-preview-table td { padding:10px 16px; border-bottom:1px solid #f1f5f9; color:var(--text); }
+.ga-preview-table tr:last-child td { border-bottom:none; }
+.ga-preview-table tr:hover td { background:#fefdf8; }
+
+/* Empty */
+.griev-admin-empty { text-align:center; padding:60px 24px; background:white; border-radius:16px; border:2px dashed rgba(212,168,67,.25); }
+.griev-admin-empty h3 { font-family:'Playfair Display',serif; font-size:1.4rem; color:var(--navy); margin-bottom:8px; }
+.griev-admin-empty p  { color:var(--gray); font-size:.88rem; }
+.griev-seed-list { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:16px auto; max-width:600px; }
+.griev-seed-chip { background:#f1f5f9; border:1px solid #e2e8f0; border-radius:50px; padding:5px 14px; font-size:.78rem; color:var(--navy); font-weight:600; }
+
+@media (max-width:640px) {
+  .ga-table-wrap { overflow-x:auto; }
+  .ga-table { min-width:560px; }
+}
+</style>
+
+<%- include('layout-bottom') %>

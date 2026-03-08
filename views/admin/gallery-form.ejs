@@ -1,0 +1,361 @@
+<%- include('layout-top') %>
+
+<div class="admin-page-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;">
+  <div>
+    <h1><%= image ? '✏️ Edit Photo' : '📸 Upload Photos' %></h1>
+    <p><%= image ? `Editing: ${image.title}` : 'Add single or multiple photos to the gallery' %></p>
+  </div>
+  <a href="/admin/gallery" class="admin-btn admin-btn-secondary">← Back to Gallery</a>
+</div>
+
+<% if (!image) { %>
+<!-- ══════════════════ UPLOAD MODE TABS ══════════════════ -->
+<div class="upload-mode-tabs">
+  <button class="upload-tab-btn active" id="tabSingle" onclick="switchTab('single')">
+    🖼️ Single Upload
+  </button>
+  <button class="upload-tab-btn" id="tabBulk" onclick="switchTab('bulk')">
+    📦 Bulk Upload
+  </button>
+</div>
+<% } %>
+
+<!-- ══════════════════ SINGLE UPLOAD / EDIT FORM ══════════════════ -->
+<div id="panelSingle">
+  <form
+    action="<%= image ? `/admin/gallery/${image._id}?_method=PUT` : '/admin/gallery' %>"
+    method="POST"
+    enctype="multipart/form-data"
+    id="singleForm"
+  >
+
+    <div class="gf-layout">
+
+      <!-- LEFT: Image Upload -->
+      <div class="admin-section gf-upload-panel">
+        <h2 class="admin-section-title">📷 Photo</h2>
+
+        <div class="gf-dropzone" id="dropzone" onclick="document.getElementById('imageInput').click()">
+          <% if (image) { %>
+            <img src="<%= image.imageUrl %>" alt="Current" id="imgPreview" class="gf-preview-img">
+            <div class="gf-drop-hint" id="dropHint" style="display:none;">
+          <% } else { %>
+            <img src="" alt="" id="imgPreview" class="gf-preview-img" style="display:none;">
+            <div class="gf-drop-hint" id="dropHint">
+          <% } %>
+              <div class="gf-drop-icon">🖼️</div>
+              <p class="gf-drop-text">Click or drag & drop image here</p>
+              <p class="gf-drop-sub">JPG, PNG, WebP · Max 8MB</p>
+            </div>
+          <div class="gf-drop-overlay" id="dropOverlay">Drop it!</div>
+        </div>
+
+        <input type="file" name="image" id="imageInput" accept="image/*" style="display:none;"
+          <%= !image ? 'required' : '' %>>
+
+        <% if (image) { %>
+          <p class="gf-replace-hint">⚠️ Choose a new image to replace the current one (optional)</p>
+        <% } %>
+
+        <button type="button" class="gf-choose-btn" onclick="document.getElementById('imageInput').click()">
+          <%= image ? '🔄 Replace Image' : '📁 Choose Image' %>
+        </button>
+      </div>
+
+      <!-- RIGHT: Details -->
+      <div style="display:flex;flex-direction:column;gap:18px;">
+
+        <div class="admin-section">
+          <h2 class="admin-section-title">📝 Details</h2>
+          <div style="display:flex;flex-direction:column;gap:14px;">
+
+            <div class="gf-field">
+              <label>Title <span class="req">*</span></label>
+              <input type="text" name="title" placeholder="e.g. Annual Convocation Ceremony 2024"
+                value="<%= image ? image.title : '' %>" required>
+            </div>
+
+            <div class="gf-field">
+              <label>Category <span class="req">*</span></label>
+              <select name="category" required>
+                <% ['Campus','Labs','Events','Sports','Achievements','Cultural'].forEach(cat => { %>
+                  <option value="<%= cat %>" <%= image && image.category === cat ? 'selected' : '' %>><%= cat %></option>
+                <% }) %>
+              </select>
+            </div>
+
+            <div class="gf-field">
+              <label>Description <span style="color:var(--gray);font-weight:400;">(optional)</span></label>
+              <textarea name="description" rows="3" placeholder="Brief caption or description of the photo..."><%= image ? (image.description || '') : '' %></textarea>
+            </div>
+
+            <div class="gf-field">
+              <label>Date Taken <span style="color:var(--gray);font-weight:400;">(optional)</span></label>
+              <input type="date" name="takenAt"
+                value="<%= image && image.takenAt ? new Date(image.takenAt).toISOString().split('T')[0] : '' %>">
+            </div>
+
+            <div class="gf-field">
+              <label>Display Order</label>
+              <input type="number" name="order" min="0" max="999" placeholder="0"
+                value="<%= image ? (image.order || 0) : 0 %>">
+              <span class="gf-hint">Lower number = shown first. 0 = default.</span>
+            </div>
+
+            <div class="gf-checkbox-field">
+              <input type="checkbox" name="isFeatured" id="isFeatured" value="true"
+                <%= image && image.isFeatured ? 'checked' : '' %>
+                style="width:18px;height:18px;accent-color:var(--accent);cursor:pointer;">
+              <label for="isFeatured" style="cursor:pointer;">
+                ⭐ Mark as Featured
+                <span class="gf-hint" style="display:block;font-weight:400;">Featured photos appear first in the gallery section</span>
+              </label>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="gf-actions">
+          <button type="submit" class="admin-btn admin-btn-primary gf-submit" id="submitBtn">
+            <%= image ? '✅ Update Photo' : '⬆️ Upload Photo' %>
+          </button>
+          <a href="/admin/gallery" class="admin-btn admin-btn-secondary">Cancel</a>
+          <% if (image) { %>
+            <form action="/admin/gallery/<%= image._id %>?_method=DELETE" method="POST"
+                  onsubmit="return confirm('Delete this photo permanently?')"
+                  style="margin-left:auto;">
+              <button type="submit" class="admin-btn admin-btn-danger">🗑️ Delete</button>
+            </form>
+          <% } %>
+        </div>
+
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- ══════════════════ BULK UPLOAD PANEL ══════════════════ -->
+<% if (!image) { %>
+<div id="panelBulk" style="display:none;">
+  <form action="/admin/gallery/bulk" method="POST" enctype="multipart/form-data" id="bulkForm">
+
+    <div class="gf-layout">
+
+      <!-- Dropzone -->
+      <div class="admin-section gf-upload-panel">
+        <h2 class="admin-section-title">📦 Select Multiple Photos</h2>
+
+        <div class="gf-dropzone gf-bulk-dropzone" id="bulkDropzone"
+             onclick="document.getElementById('bulkInput').click()">
+          <div class="gf-drop-hint" id="bulkHint">
+            <div class="gf-drop-icon">📦</div>
+            <p class="gf-drop-text">Click to select multiple photos</p>
+            <p class="gf-drop-sub">JPG, PNG, WebP · Max 8MB each · Up to 20 files</p>
+          </div>
+          <div class="gf-bulk-previews" id="bulkPreviews" style="display:none;"></div>
+        </div>
+
+        <input type="file" name="images" id="bulkInput" accept="image/*" multiple style="display:none;">
+
+        <button type="button" class="gf-choose-btn" onclick="document.getElementById('bulkInput').click()">
+          📁 Choose Photos
+        </button>
+        <p id="bulkCount" class="gf-hint" style="margin-top:8px;text-align:center;"></p>
+      </div>
+
+      <!-- Bulk Options -->
+      <div class="admin-section" style="align-self:flex-start;">
+        <h2 class="admin-section-title">⚙️ Bulk Settings</h2>
+        <div style="display:flex;flex-direction:column;gap:14px;">
+
+          <div class="gf-field">
+            <label>Category for All Photos <span class="req">*</span></label>
+            <select name="category" required>
+              <% ['Campus','Labs','Events','Sports','Achievements','Cultural'].forEach(cat => { %>
+                <option value="<%= cat %>"><%= cat %></option>
+              <% }) %>
+            </select>
+          </div>
+
+          <div class="gf-field">
+            <label>Title Prefix <span style="color:var(--gray);font-weight:400;">(optional)</span></label>
+            <input type="text" name="bulkPrefix" placeholder="e.g. TechFest 2024">
+            <span class="gf-hint">Photos will be named "TechFest 2024 1", "TechFest 2024 2"…</span>
+          </div>
+
+          <div class="gf-actions" style="flex-wrap:wrap;">
+            <button type="submit" class="admin-btn admin-btn-primary gf-submit" id="bulkSubmitBtn">
+              ⬆️ Upload All Photos
+            </button>
+            <a href="/admin/gallery" class="admin-btn admin-btn-secondary">Cancel</a>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </form>
+</div>
+<% } %>
+
+<style>
+/* ── Mode Tabs ── */
+.upload-mode-tabs { display:flex; gap:8px; margin-bottom:24px; border-bottom:2px solid #e2e8f0; padding-bottom:0; }
+.upload-tab-btn {
+  padding:10px 22px; background:none; border:none; font-size:.9rem; font-weight:600;
+  color:var(--gray); cursor:pointer; font-family:'DM Sans',sans-serif;
+  border-bottom:3px solid transparent; margin-bottom:-2px; transition:all .2s;
+}
+.upload-tab-btn.active { color:var(--navy); border-bottom-color:var(--accent); }
+.upload-tab-btn:hover { color:var(--navy); }
+
+/* ── Layout ── */
+.gf-layout { display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start; }
+
+/* ── Dropzone ── */
+.gf-dropzone {
+  border:2px dashed #cbd5e1; border-radius:14px; min-height:260px;
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  transition:all .25s; position:relative; overflow:hidden; background:#fafbfc;
+}
+.gf-dropzone:hover, .gf-dropzone.drag-over { border-color:var(--accent); background:rgba(212,168,67,.04); }
+.gf-drop-hint { text-align:center; padding:24px; pointer-events:none; }
+.gf-drop-icon { font-size:2.8rem; margin-bottom:10px; }
+.gf-drop-text { font-size:.9rem; font-weight:600; color:var(--navy); margin-bottom:4px; }
+.gf-drop-sub { font-size:.75rem; color:var(--gray); }
+.gf-preview-img { width:100%; height:100%; object-fit:cover; position:absolute; inset:0; border-radius:12px; }
+.gf-drop-overlay {
+  position:absolute; inset:0; background:rgba(212,168,67,.85);
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.5rem; font-weight:900; color:var(--navy);
+  opacity:0; transition:opacity .2s; pointer-events:none;
+}
+.gf-dropzone.drag-over .gf-drop-overlay { opacity:1; }
+
+/* Bulk previews */
+.gf-bulk-previews {
+  display:grid; grid-template-columns:repeat(4,1fr); gap:6px;
+  padding:12px; width:100%; max-height:260px; overflow-y:auto;
+}
+.gf-bulk-thumb { aspect-ratio:1; border-radius:6px; object-fit:cover; width:100%; }
+
+.gf-replace-hint { font-size:.75rem; color:var(--accent); margin:8px 0 4px; text-align:center; }
+.gf-choose-btn {
+  width:100%; margin-top:12px; padding:10px; border:2px solid var(--navy);
+  background:var(--navy); color:var(--accent); border-radius:10px;
+  font-size:.88rem; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif;
+  transition:all .2s;
+}
+.gf-choose-btn:hover { background:var(--blue); }
+
+/* ── Fields ── */
+.gf-field { display:flex; flex-direction:column; gap:5px; }
+.gf-field label { font-size:.82rem; font-weight:700; color:var(--navy); }
+.gf-field input, .gf-field select, .gf-field textarea {
+  padding:10px 14px; border:2px solid #e2e8f0; border-radius:10px;
+  font-size:.9rem; font-family:'DM Sans',sans-serif; color:var(--text);
+  transition:border-color .2s; outline:none; background:white;
+}
+.gf-field input:focus, .gf-field select:focus, .gf-field textarea:focus { border-color:var(--accent); }
+.gf-field textarea { resize:vertical; }
+.gf-hint { font-size:.72rem; color:var(--gray); }
+.gf-checkbox-field { display:flex; align-items:flex-start; gap:10px; padding:14px; background:#f8fafc; border-radius:10px; border:1px solid #e2e8f0; }
+.gf-checkbox-field label { font-size:.9rem; font-weight:700; color:var(--navy); cursor:pointer; }
+.req { color:#dc2626; }
+
+/* ── Actions ── */
+.gf-actions { display:flex; gap:10px; align-items:center; }
+.gf-submit { padding:12px 24px !important; }
+
+@media(max-width:768px) {
+  .gf-layout { grid-template-columns:1fr; }
+  .gf-bulk-previews { grid-template-columns:repeat(3,1fr); }
+}
+</style>
+
+<script>
+// ── Tab switcher ──────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.getElementById('panelSingle').style.display = tab === 'single' ? 'block' : 'none';
+  document.getElementById('panelBulk').style.display   = tab === 'bulk'   ? 'block' : 'none';
+  document.getElementById('tabSingle').classList.toggle('active', tab === 'single');
+  document.getElementById('tabBulk').classList.toggle('active',   tab === 'bulk');
+}
+
+// ── Check for ?bulk=1 on page load ────────────────────────────────────────
+if (new URLSearchParams(window.location.search).get('bulk') === '1') {
+  switchTab('bulk');
+}
+
+// ── Single image preview ──────────────────────────────────────────────────
+const imageInput  = document.getElementById('imageInput');
+const imgPreview  = document.getElementById('imgPreview');
+const dropHint    = document.getElementById('dropHint');
+
+if (imageInput) {
+  imageInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) { alert('File too large (max 8MB).'); imageInput.value = ''; return; }
+    const reader = new FileReader();
+    reader.onload = ev => {
+      imgPreview.src = ev.target.result;
+      imgPreview.style.display = 'block';
+      if (dropHint) dropHint.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ── Drag & drop (single) ──────────────────────────────────────────────────
+const dropzone = document.getElementById('dropzone');
+if (dropzone) {
+  ['dragenter','dragover'].forEach(e => dropzone.addEventListener(e, ev => { ev.preventDefault(); dropzone.classList.add('drag-over'); }));
+  ['dragleave','drop'].forEach(e => dropzone.addEventListener(e, ev => { ev.preventDefault(); dropzone.classList.remove('drag-over'); }));
+  dropzone.addEventListener('drop', ev => {
+    const file = ev.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      const dt = new DataTransfer(); dt.items.add(file); imageInput.files = dt.files;
+      imageInput.dispatchEvent(new Event('change'));
+    }
+  });
+}
+
+// ── Bulk image previews ───────────────────────────────────────────────────
+const bulkInput    = document.getElementById('bulkInput');
+const bulkHint     = document.getElementById('bulkHint');
+const bulkPreviews = document.getElementById('bulkPreviews');
+const bulkCount    = document.getElementById('bulkCount');
+
+if (bulkInput) {
+  bulkInput.addEventListener('change', () => {
+    const files = Array.from(bulkInput.files);
+    if (!files.length) return;
+    bulkCount.textContent = `${files.length} photo${files.length > 1 ? 's' : ''} selected`;
+    bulkHint.style.display    = 'none';
+    bulkPreviews.style.display = 'grid';
+    bulkPreviews.innerHTML = '';
+    files.slice(0, 20).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const img = document.createElement('img');
+        img.src = ev.target.result;
+        img.className = 'gf-bulk-thumb';
+        bulkPreviews.appendChild(img);
+      };
+      reader.readAsDataURL(file);
+    });
+  });
+}
+
+// ── Loading state on submit ───────────────────────────────────────────────
+document.querySelectorAll('form').forEach(form => {
+  form.addEventListener('submit', () => {
+    const btn = form.querySelector('.gf-submit');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Uploading…'; }
+  });
+});
+</script>
+
+<%- include('layout-bottom') %>
