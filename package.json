@@ -2,6 +2,7 @@
   "name": "srpp-polytechnic-website",
   "version": "1.0.0",
   "description": "SRPP Polytechnic Institute Full-Stack Website",
+  "author": {"name": "SIDDHESHWAR GUNJKAR"},
   "main": "app.js",
   "scripts": {
     "start": "node app.js",

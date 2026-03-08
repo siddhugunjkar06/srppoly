@@ -272,6 +272,7 @@
             <div class="faculty-info">
               <h4><%= member.name %></h4>
               <p class="faculty-dept"><%= member.designation %></p>
+              <p class="faculty"><%= member.department %></p>
               <p class="faculty-exp"><%= member.qualification %><%= member.experience ? ' · ' + member.experience : '' %></p>
               <% if (member.specialization) { %>
                 <div class="faculty-tags">
