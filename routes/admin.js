@@ -233,7 +233,8 @@ router.get('/notices/new', requireAuth, (req, res) => {
 router.post('/notices', requireAuth, async (req, res) => {
   try {
     const { title, content, category, isImportant } = req.body;
-    await Notice.create({ title, content, category, isImportant: !!isImportant });
+    const { externalLink } = req.body;
+    await Notice.create({ title, content, category, isImportant: !!isImportant, externalLink: externalLink || '' });
     req.flash('success', 'Notice published successfully!');
     res.redirect('/admin/notices');
   } catch (err) {
@@ -249,7 +250,8 @@ router.get('/notices/:id/edit', requireAuth, async (req, res) => {
 
 router.put('/notices/:id', requireAuth, async (req, res) => {
   const { title, content, category, isImportant } = req.body;
-  await Notice.findByIdAndUpdate(req.params.id, { title, content, category, isImportant: !!isImportant });
+  const { externalLink } = req.body;
+  await Notice.findByIdAndUpdate(req.params.id, { title, content, category, isImportant: !!isImportant, externalLink: externalLink || '' });
   req.flash('success', 'Notice updated!');
   res.redirect('/admin/notices');
 });

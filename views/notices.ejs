@@ -22,14 +22,30 @@
       <div class="notices-list">
         <% notices.forEach(notice => { %>
           <div class="notice-list-item fade-in">
-            <div class="notice-list-meta">
-              <span class="notice-cat notice-cat-<%= notice.category.toLowerCase() %>"><%= notice.category %></span>
-              <% if (notice.isImportant) { %><span class="notice-important">⚠️ Important</span><% } %>
-              <% if (notice.isNew) { %><span class="notice-new">NEW</span><% } %>
-              <span class="notice-date">📅 <%= new Date(notice.publishedAt).toLocaleDateString('en-IN', {day:'numeric',month:'long',year:'numeric'}) %></span>
+
+            <!-- Left: all text content -->
+            <div class="notice-item-body">
+              <div class="notice-list-meta">
+                <span class="notice-cat notice-cat-<%= notice.category.toLowerCase() %>"><%= notice.category %></span>
+                <% if (notice.isImportant) { %><span class="notice-important">⚠️ Important</span><% } %>
+                <% if (notice.isNew) { %><span class="notice-new">NEW</span><% } %>
+                <span class="notice-date">📅 <%= new Date(notice.publishedAt).toLocaleDateString('en-IN', {day:'numeric',month:'long',year:'numeric'}) %></span>
+              </div>
+              <h3 class="notice-list-title"><%= notice.title %></h3>
+              <p class="notice-list-body"><%= notice.content %></p>
             </div>
-            <h3 class="notice-list-title"><%= notice.title %></h3>
-            <p class="notice-list-body"><%= notice.content %></p>
+
+            <!-- Right: external link button (only if URL is set) -->
+            <% if (notice.externalLink && notice.externalLink.trim()) { %>
+              <div class="notice-link-col">
+                <a href="<%= notice.externalLink %>" target="_blank" rel="noopener noreferrer" class="notice-ext-btn">
+                  <!-- <span class="notice-ext-icon">🔗</span> -->
+                  <span class="notice-ext-label">View Link ↗</span>
+                  <!-- <span class="notice-ext-arrow">↗</span> -->
+                </a>
+              </div>
+            <% } %>
+
           </div>
         <% }) %>
       </div>
@@ -43,5 +59,57 @@
     <% } %>
   </div>
 </section>
+
+<style>
+/* ── Notice card layout: text left, button right ── */
+.notice-list-item {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.notice-item-body {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── External link button ── */
+.notice-link-col {
+  flex-shrink: 0;
+}
+.notice-ext-btn {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, var(--navy), var(--blue));
+  color: var(--accent);
+  border-radius: 14px;
+  text-decoration: none;
+  min-width: 72px;
+  border: 1px solid rgba(212,168,67,.25);
+  box-shadow: 0 4px 14px rgba(10,22,40,.15);
+  transition: all .25s;
+  white-space: nowrap;
+}
+.notice-ext-btn:hover {
+  background: linear-gradient(135deg, var(--blue), var(--navy));
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(10,22,40,.22);
+  border-color: var(--accent);
+}
+.notice-ext-icon  { font-size: 1.2rem; line-height: 1; }
+.notice-ext-label { font-size: .65rem; font-weight: 700; font-family: 'Space Mono', monospace; text-transform: uppercase; letter-spacing: .06em; }
+.notice-ext-arrow { font-size: .75rem; opacity: .7; }
+
+/* Responsive: stack button below on small screens */
+@media (max-width: 560px) {
+  .notice-list-item { flex-direction: column; align-items: flex-start; }
+  .notice-link-col  { align-self: flex-end; }
+  .notice-ext-btn   { flex-direction: row; gap: 8px; padding: 9px 14px; }
+  .notice-ext-label { font-size: .7rem; }
+}
+</style>
 
 <%- include('partials/footer') %>

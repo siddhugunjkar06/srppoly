@@ -286,6 +286,8 @@ footer { background: var(--navy); padding: 72px 0 0; border-top: 1px solid rgba(
 .footer-links a:hover::before { opacity: 1; }
 .footer-bottom { max-width: 1280px; margin: 0 auto; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
 .footer-bottom p { font-size: .78rem; color: rgba(255,255,255,.3); }
+.footer-top { max-width: 1280px; margin: 0 auto; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+.footer-top p { font-size: .78rem; color: rgba(255,255,255,.3); }
 .footer-bottom a { color: var(--accent); text-decoration: none; }
 
 /* ---- MODAL ---- */

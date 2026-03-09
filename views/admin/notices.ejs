@@ -12,7 +12,15 @@
   <div class="admin-table-wrap">
     <table class="admin-table">
       <thead>
-        <tr><th>#</th><th>Title</th><th>Category</th><th>Important</th><th>Published</th><th>Actions</th></tr>
+        <tr>
+          <th>#</th>
+          <th>Title</th>
+          <th>Category</th>
+          <th>Important</th>
+          <th>Link</th>
+          <th>Published</th>
+          <th>Actions</th>
+        </tr>
       </thead>
       <tbody>
         <% if (notices && notices.length > 0) { %>
@@ -25,6 +33,18 @@
               </td>
               <td><span class="notice-cat notice-cat-<%= n.category.toLowerCase() %>"><%= n.category %></span></td>
               <td><%= n.isImportant ? '⚠️ Yes' : '—' %></td>
+              <td>
+                <% if (n.externalLink && n.externalLink.trim()) { %>
+                  <a href="<%= n.externalLink %>" target="_blank" rel="noopener noreferrer"
+                     style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:rgba(26,58,107,.08);border:1px solid rgba(26,58,107,.18);border-radius:7px;font-size:.72rem;font-weight:700;color:var(--blue);text-decoration:none;transition:all .2s;"
+                     onmouseover="this.style.background='var(--blue)';this.style.color='white';"
+                     onmouseout="this.style.background='rgba(26,58,107,.08)';this.style.color='var(--blue)';">
+                    🔗 Link ↗
+                  </a>
+                <% } else { %>
+                  <span style="color:#cbd5e1;font-size:.8rem;">—</span>
+                <% } %>
+              </td>
               <td><%= new Date(n.publishedAt).toLocaleDateString('en-IN') %></td>
               <td style="display:flex;gap:6px;flex-wrap:wrap;">
                 <a href="/admin/notices/<%= n._id %>/edit" class="admin-btn admin-btn-secondary admin-btn-sm">Edit</a>
@@ -35,7 +55,7 @@
             </tr>
           <% }) %>
         <% } else { %>
-          <tr><td colspan="6" style="text-align:center;color:var(--gray);padding:40px;">No notices yet. <a href="/admin/notices/new">Create one →</a></td></tr>
+          <tr><td colspan="7" style="text-align:center;color:var(--gray);padding:40px;">No notices yet. <a href="/admin/notices/new">Create one →</a></td></tr>
         <% } %>
       </tbody>
     </table>

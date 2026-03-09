@@ -7,7 +7,8 @@ const noticeSchema = new mongoose.Schema({
   isNew:     { type: Boolean, default: true },
   isImportant: { type: Boolean, default: false },
   publishedAt: { type: Date, default: Date.now },
-  expiresAt: { type: Date },
+  expiresAt:    { type: Date },
+  externalLink: { type: String, trim: true, default: '' },   // optional URL
   createdAt: { type: Date, default: Date.now }
 });
 
