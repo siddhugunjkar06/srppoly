@@ -94,7 +94,6 @@ NODE_ENV=development
 node seed.js
 ```
 This creates:
-- Admin user: `admin` / `srpp@2024`
 - 6 sample notices
 
 ### 4. Run the server
@@ -123,8 +122,7 @@ npm start
 | Notices             | /admin/notices              |
 | New Notice          | /admin/notices/new          |
 
-**Default credentials:** `admin` / `srpp@2024`
-> ⚠️ Change the password after first login!
+
 
 ---
 
