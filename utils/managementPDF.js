@@ -323,14 +323,14 @@ function generateBonafidePDF(record, res) {
     ? `${record.dobDay} / ${record.dobMonth} / ${record.dobYear}`
     : '   /   /  ';
   doc.font('Helvetica-Oblique').fontSize(12)
-     .text(`        His/Her Date of Birth`, ML, body4Y, { continued: true })
+     .text(`        His / Her  Date  of  Birth `, ML, body4Y, { continued: true })
      .text(`    ${dob}`, { continued: true })
-     .text('     as per');
+     .text('     as   per   our  ');
 
   // ── "our office records." ─────────────────────────────────────────────────
   const body5Y = body4Y + 28;
   doc.font('Helvetica-Oblique').fontSize(12)
-     .text('our office records.', ML, body5Y);
+     .text('  office  records.', ML, body5Y);
 
   // ── Issue Date at bottom ──────────────────────────────────────────────────
   const dateBottomY = body5Y + 80;
