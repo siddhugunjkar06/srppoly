@@ -9,7 +9,8 @@ const Faculty    = require('../models/Faculty');
 const Gallery    = require('../models/Gallery');
 const Grievance  = require('../models/Grievance');
 const Syllabus   = require('../models/Syllabus');
-const LabManual  = require('../models/LabManual');
+const LabManual        = require('../models/LabManual');
+const SubjectSyllabus  = require('../models/SubjectSyllabus');
 
 const DEPT_CONFIG = {
   'electrical-engineering': {
@@ -142,18 +143,21 @@ router.get('/departments/:slug', async (req, res) => {
     const cfg = DEPT_CONFIG[req.params.slug];
     if (!cfg) return res.redirect('/#departments');
 
-    const [syllabus, faculty, labManuals] = await Promise.all([
-      Syllabus.find({ department: cfg.name, isActive: true }).sort({ semester: 1, type: 1 }).lean(),
+    const [syllabus, subjectSyllabus, faculty, labManuals] = await Promise.all([
+      Syllabus.find({ department: cfg.name, isActive: true }).sort({ semester: 1 }).lean(),
+      SubjectSyllabus.find({ department: cfg.name, isActive: true }).sort({ semester: 1, order: 1, subjectName: 1 }).lean(),
       Faculty.find({ department: cfg.name }).sort({ isHOD: -1, order: 1 }).lean(),
       LabManual.find({ department: cfg.name, isActive: true }, { semester: 1 }).lean()
     ]);
 
-    // Group syllabus by semester
+    // Group curriculum by semester
     const bySemester = {};
-    for (let s = 1; s <= 6; s++) bySemester[s] = {};
+    for (let s = 1; s <= 6; s++) bySemester[s] = { curriculum: null, subjects: [] };
     syllabus.forEach(doc => {
-      if (!bySemester[doc.semester]) bySemester[doc.semester] = {};
-      bySemester[doc.semester][doc.type] = doc;
+      if (bySemester[doc.semester]) bySemester[doc.semester].curriculum = doc;
+    });
+    subjectSyllabus.forEach(doc => {
+      if (bySemester[doc.semester]) bySemester[doc.semester].subjects.push(doc);
     });
 
     // Count lab manuals per semester
@@ -172,6 +176,51 @@ router.get('/departments/:slug', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.redirect('/#departments');
+  }
+});
+
+
+// ── PUBLIC SYLLABUS PAGE (all depts, all sems) ────────────────────────────
+router.get('/syllabus', async (req, res) => {
+  try {
+    const { dept, sem } = req.query;
+    const DEPTS = Object.values(DEPT_CONFIG).map(d => d.name);
+    const SEMESTERS = [1,2,3,4,5,6];
+
+    const filter = {};
+    if (dept && dept !== 'All') filter.department = dept;
+    if (sem  && sem  !== 'All') filter.semester   = parseInt(sem);
+
+    const [curricula, subjects] = await Promise.all([
+      Syllabus.find({ ...filter, isActive: true }).sort({ department:1, semester:1 }).lean(),
+      SubjectSyllabus.find({ ...filter, isActive: true }).sort({ department:1, semester:1, order:1, subjectName:1 }).lean()
+    ]);
+
+    // Group: dept -> sem -> { curriculum, subjects[] }
+    const grouped = {};
+    DEPTS.forEach(d => {
+      grouped[d] = {};
+      SEMESTERS.forEach(s => { grouped[d][s] = { curriculum: null, subjects: [] }; });
+    });
+    curricula.forEach(doc => {
+      if (grouped[doc.department] && grouped[doc.department][doc.semester])
+        grouped[doc.department][doc.semester].curriculum = doc;
+    });
+    subjects.forEach(doc => {
+      if (grouped[doc.department] && grouped[doc.department][doc.semester])
+        grouped[doc.department][doc.semester].subjects.push(doc);
+    });
+
+    res.render('syllabus', {
+      title: 'Syllabus & Curriculum — SRPP Polytechnic',
+      grouped, DEPT_CONFIG, DEPTS, SEMESTERS,
+      activeDept: dept || 'All',
+      activeSem:  sem  || 'All',
+      currentPath: '/syllabus',
+    });
+  } catch (err) {
+    console.error(err);
+    res.redirect('/');
   }
 });
 
@@ -250,6 +299,18 @@ router.get('/download/lab-manual/:id', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).send('Download error.');
+  }
+});
+
+
+router.get('/download/subject-syllabus/:id', async (req, res) => {
+  try {
+    const doc = await SubjectSyllabus.findById(req.params.id).lean();
+    if (!doc)        return res.status(404).send('Not found.');
+    if (!doc.pdfUrl) return res.status(404).send('No PDF uploaded yet.');
+    streamPDF(doc.pdfUrl, doc.pdfName || doc.subjectName + '_Syllabus', res);
+  } catch (err) {
+    res.status(500).send('Error fetching PDF.');
   }
 });
 

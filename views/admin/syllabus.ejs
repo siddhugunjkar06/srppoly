@@ -8,203 +8,202 @@ const DEPT_META = {
   'Electronics & Communication': { icon:'📡', color:'#5c3a1a', slug:'electronics-communication' },
 };
 const activeDepts = activeDept === 'All' ? DEPTS : [activeDept];
+const activeSem   = activeSemFilter && activeSemFilter !== 'All' ? parseInt(activeSemFilter) : 'All';
 %>
 
 <div class="admin-page-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;">
   <div>
     <h1>📋 Syllabus</h1>
-    <p>Upload MSBTE Curriculum PDFs for each semester across all 4 departments</p>
+    <p>Manage MSBTE Curriculum PDFs and Subject-wise Syllabus PDFs semester by semester</p>
   </div>
   <div style="display:flex;gap:10px;flex-wrap:wrap;">
-    <a href="/admin/syllabus/new" class="admin-btn admin-btn-primary">+ Upload Document</a>
+    <a href="/admin/syllabus/new" class="admin-btn admin-btn-secondary">+ Curriculum PDF</a>
+    <a href="/admin/subject-syllabus/new<%= activeDept !== 'All' ? '?dept='+encodeURIComponent(activeDept) : '' %>" class="admin-btn admin-btn-primary">+ Subject PDF</a>
   </div>
 </div>
 
-<!-- Dept filter tabs -->
-<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px;">
+<!-- Dept tabs -->
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
   <% ['All',...DEPTS].forEach(d => { %>
-    <a href="/admin/syllabus?dept=<%= encodeURIComponent(d) %>"
+    <a href="/admin/syllabus?dept=<%= encodeURIComponent(d) %>&sem=<%= activeSemFilter %>"
        class="syl-tab <%= activeDept === d ? 'syl-tab-active' : '' %>">
       <% if (DEPT_META[d]) { %><%= DEPT_META[d].icon %> <% } %>
-      <%= d === 'All' ? '🏛️ All Departments' : d.split(' ')[0] + ' ' + d.split(' ')[1] %>
+      <%= d === 'All' ? '🏛️ All' : d.split(' ').slice(0,2).join(' ') %>
     </a>
   <% }) %>
 </div>
 
-<!-- Progress summary -->
-<div class="syl-progress-bar-wrap">
-  <%
-    let totalSlots = 0, filled = 0;
-    activeDepts.forEach(d => {
-      SEMESTERS.forEach(s => {
-        SYL_TYPES.forEach(t => {
-          totalSlots++;
-          if (grouped[d] && grouped[d][s] && grouped[d][s][t]) filled++;
-        });
-      });
-    });
-    const pct = totalSlots ? Math.round((filled/totalSlots)*100) : 0;
-  %>
-  <div class="syl-progress-label">
-    <span>Upload Progress</span>
-    <span><strong style="color:var(--navy);"><%= filled %></strong> / <%= totalSlots %> documents uploaded (<%= pct %>%)</span>
-  </div>
-  <div class="syl-progress-track">
-    <div class="syl-progress-fill" style="width:<%= pct %>%"></div>
-  </div>
+<!-- Sem tabs -->
+<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:24px;">
+  <% ['All',1,2,3,4,5,6].forEach(s => { %>
+    <a href="/admin/syllabus?dept=<%= encodeURIComponent(activeDept) %>&sem=<%= s %>"
+       class="syl-sem-tab <%= String(activeSemFilter) === String(s) ? 'syl-sem-tab-active' : '' %>">
+      <%= s === 'All' ? 'All Sems' : 'Sem ' + s %>
+    </a>
+  <% }) %>
 </div>
 
-<!-- Per-department grids -->
 <% activeDepts.forEach(dept => {
   const meta = DEPT_META[dept] || {};
-  const deptDocs = docs.filter(d => d.department === dept);
+  const deptCurr     = docs.filter(d => d.department === dept);
+  const deptSubjects = subjectDocs.filter(s => s.department === dept);
+  const filtSems     = activeSem === 'All' ? SEMESTERS : [activeSem];
 %>
 <div class="syl-dept-section">
 
-  <!-- Dept Header -->
   <div class="syl-dept-header">
-    <div class="syl-dept-icon" style="background:<%= meta.color || '#0a1628' %>">
-      <%= meta.icon || '📚' %>
-    </div>
+    <div class="syl-dept-icon" style="background:<%= meta.color||'#0a1628' %>"><%= meta.icon||'📚' %></div>
     <div>
       <h2 class="syl-dept-name"><%= dept %></h2>
       <p class="syl-dept-sub">
-        <%= deptDocs.filter(d=>d.pdfUrl).length %> PDFs uploaded &bull;
+        <%= deptCurr.filter(d=>d.pdfUrl).length %> curriculum PDFs &bull;
+        <%= deptSubjects.filter(s=>s.pdfUrl).length %> subject PDFs &bull;
         <a href="/departments/<%= meta.slug %>" target="_blank" style="color:var(--blue);">View Public Page ↗</a>
       </p>
     </div>
     <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;">
-      <a href="/admin/lab-manuals?dept=<%= encodeURIComponent(dept) %>&sem=All"
-         class="admin-btn admin-btn-secondary admin-btn-sm">
-        🔬 View Lab Manuals
-      </a>
-      <a href="/admin/syllabus/new?dept=<%= encodeURIComponent(dept) %>"
-         class="admin-btn admin-btn-secondary admin-btn-sm">
-        + Add Curriculum
-      </a>
+      <a href="/admin/syllabus/new?dept=<%= encodeURIComponent(dept) %>" class="admin-btn admin-btn-secondary admin-btn-sm">+ Curriculum</a>
+      <a href="/admin/subject-syllabus/new?dept=<%= encodeURIComponent(dept) %>" class="admin-btn admin-btn-primary admin-btn-sm">+ Subject PDF</a>
     </div>
   </div>
 
-  <!-- Semester matrix table -->
-  <div class="syl-matrix-wrap">
-    <table class="syl-matrix">
-      <thead>
-        <tr>
-          <th class="syl-th-sem">Semester</th>
-          <% SYL_TYPES.forEach(t => { %>
-            <th class="syl-th-type">
-              📋 MSBTE Curriculum
-            </th>
-          <% }) %>
-        </tr>
-      </thead>
-      <tbody>
-        <% SEMESTERS.forEach(sem => { %>
-          <tr class="syl-matrix-row">
-            <td class="syl-td-sem">
-              <span class="syl-sem-badge">Sem <%= sem %></span>
-            </td>
-            <% SYL_TYPES.forEach(type => {
-              const doc = grouped[dept] && grouped[dept][sem] && grouped[dept][sem][type];
-            %>
-              <td class="syl-td-cell">
-                <% if (doc) { %>
-                  <div class="syl-cell-filled">
-                    <div class="syl-cell-title"><%= doc.title %></div>
-                    <% if (doc.academicYear) { %>
-                      <div class="syl-cell-year">📅 <%= doc.academicYear %></div>
-                    <% } %>
-                    <div class="syl-cell-actions">
-                      <% if (doc.pdfUrl) { %>
-                        <a href="/download/syllabus/<%= doc._id %>" target="_blank" class="syl-action-pdf" title="View PDF">📄 PDF</a>
-                      <% } else { %>
-                        <span class="syl-action-nopdf">No PDF</span>
-                      <% } %>
-                      <a href="/admin/syllabus/<%= doc._id %>/edit" class="syl-action-edit">✏️ Edit</a>
-                      <form action="/admin/syllabus/<%= doc._id %>?_method=DELETE" method="POST"
-                            onsubmit="return confirm('Delete this document?')" style="display:inline;">
-                        <button type="submit" class="syl-action-del">🗑️</button>
-                      </form>
-                    </div>
-                  </div>
-                <% } else { %>
-                  <div class="syl-cell-empty">
-                    <a href="/admin/syllabus/new?dept=<%= encodeURIComponent(dept) %>&sem=<%= sem %>&type=<%= encodeURIComponent(type) %>"
-                       class="syl-cell-upload-btn">
-                      ＋ Upload
-                    </a>
-                  </div>
-                <% } %>
-              </td>
+  <% filtSems.forEach(sem => {
+    const currDoc     = grouped[dept]&&grouped[dept][sem]&&grouped[dept][sem]['MSBTE Curriculum'];
+    const semSubjects = deptSubjects.filter(s=>s.semester===sem)
+                                    .sort((a,b)=>(a.order-b.order)||a.subjectName.localeCompare(b.subjectName));
+  %>
+  <div class="syl-sem-block">
+    <div class="syl-sem-header">
+      <span class="syl-sem-badge">Sem <%= sem %></span>
+      <span class="syl-sem-year"><%= sem<=2?'1st Year':sem<=4?'2nd Year':'3rd Year' %></span>
+      <a href="/admin/subject-syllabus/new?dept=<%= encodeURIComponent(dept) %>&sem=<%= sem %>" class="syl-add-subject-btn">＋ Add Subject</a>
+    </div>
+
+    <div class="syl-sem-body">
+
+      <!-- Curriculum card -->
+      <div class="syl-curriculum-card">
+        <div class="syl-card-label">📋 MSBTE Curriculum</div>
+        <% if (currDoc) { %>
+          <div class="syl-curr-title"><%= currDoc.title %></div>
+          <% if (currDoc.academicYear) { %><div class="syl-curr-year">📅 <%= currDoc.academicYear %></div><% } %>
+          <div class="syl-curr-actions">
+            <% if (currDoc.pdfUrl) { %>
+              <a href="/download/syllabus/<%= currDoc._id %>" target="_blank" class="syl-action-pdf">📄 PDF</a>
+            <% } else { %>
+              <span class="syl-action-nopdf">No PDF</span>
+            <% } %>
+            <a href="/admin/syllabus/<%= currDoc._id %>/edit" class="syl-action-edit">✏️ Edit</a>
+            <form action="/admin/syllabus/<%= currDoc._id %>?_method=DELETE" method="POST"
+                  onsubmit="return confirm('Delete curriculum?')" style="display:inline;">
+              <button type="submit" class="syl-action-del">🗑️</button>
+            </form>
+          </div>
+        <% } else { %>
+          <div class="syl-curr-empty">
+            <a href="/admin/syllabus/new?dept=<%= encodeURIComponent(dept) %>&sem=<%= sem %>" class="syl-cell-upload-btn">＋ Upload Curriculum</a>
+          </div>
+        <% } %>
+      </div>
+
+      <!-- Subject PDFs -->
+      <div class="syl-subjects-area">
+        <div class="syl-card-label">📂 Subject-wise PDFs (<%= semSubjects.length %>)</div>
+        <% if (semSubjects.length > 0) { %>
+          <div class="syl-subjects-grid">
+            <% semSubjects.forEach(sub => { %>
+              <div class="syl-subject-card <%= sub.isActive ? '' : 'syl-subject-inactive' %>">
+                <div class="syl-subject-top">
+                  <% if (sub.subjectCode) { %><span class="syl-subject-code"><%= sub.subjectCode %></span><% } %>
+                  <% if (!sub.isActive) { %><span class="syl-subject-hidden-badge">Hidden</span><% } %>
+                </div>
+                <div class="syl-subject-name"><%= sub.subjectName %></div>
+                <% if (sub.academicYear) { %><div class="syl-subject-year">📅 <%= sub.academicYear %></div><% } %>
+                <div class="syl-subject-actions">
+                  <% if (sub.pdfUrl) { %>
+                    <a href="/download/subject-syllabus/<%= sub._id %>" target="_blank" class="syl-action-pdf">📄 PDF</a>
+                  <% } else { %>
+                    <span class="syl-action-nopdf">No PDF</span>
+                  <% } %>
+                  <a href="/admin/subject-syllabus/<%= sub._id %>/edit" class="syl-action-edit">✏️</a>
+                  <form action="/admin/subject-syllabus/<%= sub._id %>?_method=DELETE" method="POST"
+                        onsubmit="return confirm('Delete <%= sub.subjectName %>?')" style="display:inline;">
+                    <button type="submit" class="syl-action-del">🗑️</button>
+                  </form>
+                </div>
+              </div>
             <% }) %>
-          </tr>
-        <% }) %>
-      </tbody>
-    </table>
+            <a href="/admin/subject-syllabus/new?dept=<%= encodeURIComponent(dept) %>&sem=<%= sem %>" class="syl-subject-add-card">
+              <span style="font-size:1.6rem;">＋</span>
+              <span style="font-size:.74rem;font-weight:600;">Add Subject</span>
+            </a>
+          </div>
+        <% } else { %>
+          <div class="syl-subjects-empty">
+            <div style="font-size:1.8rem;margin-bottom:6px;">📂</div>
+            <div style="font-size:.8rem;color:var(--gray);margin-bottom:10px;">No subject PDFs for Sem <%= sem %></div>
+            <a href="/admin/subject-syllabus/new?dept=<%= encodeURIComponent(dept) %>&sem=<%= sem %>" class="syl-cell-upload-btn">＋ Add First Subject</a>
+          </div>
+        <% } %>
+      </div>
+
+    </div>
   </div>
+  <% }) %>
 
 </div>
 <% }) %>
 
 <style>
-/* ── Tabs ── */
-.syl-tab {
-  display:inline-flex; align-items:center; gap:6px;
-  padding:7px 14px; border-radius:50px; border:1px solid #e2e8f0;
-  background:white; font-size:.82rem; font-weight:500; cursor:pointer;
-  transition:all .2s; color:var(--gray); text-decoration:none; white-space:nowrap;
-}
-.syl-tab:hover { background:#f1f5f9; border-color:#cbd5e1; color:var(--navy); }
-.syl-tab-active { background:var(--navy)!important; color:var(--accent)!important; border-color:var(--navy)!important; font-weight:700!important; }
-
-/* ── Progress ── */
-.syl-progress-bar-wrap { margin-bottom:28px; }
-.syl-progress-label { display:flex; justify-content:space-between; font-size:.82rem; color:var(--gray); margin-bottom:8px; }
-.syl-progress-track { height:8px; background:#e2e8f0; border-radius:50px; overflow:hidden; }
-.syl-progress-fill  { height:100%; background:linear-gradient(90deg,var(--accent),var(--gold)); border-radius:50px; transition:width .5s ease; }
-
-/* ── Dept section ── */
-.syl-dept-section { background:white; border-radius:16px; border:1px solid #e2e8f0; overflow:hidden; margin-bottom:24px; box-shadow:0 2px 12px rgba(10,22,40,.05); }
-.syl-dept-header { display:flex; align-items:center; gap:16px; padding:20px 24px; border-bottom:1px solid #f1f5f9; flex-wrap:wrap; }
-.syl-dept-icon { width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.5rem; flex-shrink:0; }
-.syl-dept-name { font-family:'Playfair Display',serif; font-size:1.1rem; font-weight:800; color:var(--navy); margin-bottom:2px; }
-.syl-dept-sub  { font-size:.78rem; color:var(--gray); }
-
-/* ── Matrix table ── */
-.syl-matrix-wrap { overflow-x:auto; }
-.syl-matrix { width:100%; border-collapse:collapse; min-width:600px; }
-.syl-matrix thead { background:#f8fafc; }
-.syl-th-sem  { padding:12px 16px; text-align:center; font-family:'Space Mono',monospace; font-size:.68rem; font-weight:700; color:var(--gray); text-transform:uppercase; letter-spacing:.05em; border-bottom:2px solid #e2e8f0; width:110px; }
-.syl-th-type { padding:12px 20px; text-align:left; font-family:'Space Mono',monospace; font-size:.7rem; font-weight:700; color:var(--navy); text-transform:uppercase; letter-spacing:.04em; border-bottom:2px solid #e2e8f0; border-left:1px solid #f1f5f9; }
-.syl-matrix-row { border-bottom:1px solid #f1f5f9; transition:background .15s; }
-.syl-matrix-row:last-child { border-bottom:none; }
-.syl-matrix-row:hover { background:#fdfcf8; }
-.syl-td-sem  { padding:14px 16px; text-align:center; border-right:2px solid #f1f5f9; vertical-align:middle; }
-.syl-td-cell { padding:12px 16px; vertical-align:middle; border-left:1px solid #f1f5f9; min-width:240px; }
-.syl-sem-badge { display:inline-flex; align-items:center; justify-content:center; padding:5px 12px; background:linear-gradient(135deg,var(--navy),var(--blue)); color:var(--accent); border-radius:50px; font-family:'Space Mono',monospace; font-size:.72rem; font-weight:700; white-space:nowrap; }
-
-/* Filled cell */
-.syl-cell-filled { display:flex; flex-direction:column; gap:4px; }
-.syl-cell-title  { font-size:.82rem; font-weight:600; color:var(--navy); line-height:1.4; }
-.syl-cell-year   { font-size:.7rem; color:var(--gray); }
-.syl-cell-actions { display:flex; align-items:center; gap:6px; margin-top:4px; }
-.syl-action-pdf  { font-size:.72rem; color:var(--blue); background:rgba(26,58,107,.07); border:1px solid rgba(26,58,107,.12); border-radius:50px; padding:3px 9px; text-decoration:none; font-weight:700; transition:all .2s; }
-.syl-action-pdf:hover { background:var(--blue); color:white; }
-.syl-action-nopdf{ font-size:.7rem; color:#94a3b8; font-style:italic; }
-.syl-action-edit { font-size:.72rem; color:#d97706; background:rgba(217,119,6,.07); border:1px solid rgba(217,119,6,.12); border-radius:50px; padding:3px 9px; text-decoration:none; font-weight:700; transition:all .2s; }
-.syl-action-edit:hover { background:#d97706; color:white; }
-.syl-action-del  { font-size:.72rem; color:#dc2626; background:rgba(220,38,38,.07); border:1px solid rgba(220,38,38,.12); border-radius:50px; padding:3px 9px; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all .2s; }
-.syl-action-del:hover { background:#dc2626; color:white; }
-
-/* Empty cell */
-.syl-cell-empty { display:flex; align-items:center; justify-content:flex-start; }
-.syl-cell-upload-btn {
-  display:inline-flex; align-items:center; gap:5px;
-  padding:6px 14px; border:1.5px dashed #cbd5e1; border-radius:8px;
-  font-size:.76rem; font-weight:600; color:#94a3b8; text-decoration:none;
-  transition:all .2s; background:transparent;
-}
-.syl-cell-upload-btn:hover { border-color:var(--accent); color:var(--navy); background:rgba(212,168,67,.06); }
+.syl-tab{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:50px;border:1px solid #e2e8f0;background:white;font-size:.8rem;font-weight:500;cursor:pointer;transition:all .2s;color:var(--gray);text-decoration:none;white-space:nowrap;}
+.syl-tab:hover{background:#f1f5f9;border-color:#cbd5e1;color:var(--navy);}
+.syl-tab-active{background:var(--navy)!important;color:var(--accent)!important;border-color:var(--navy)!important;font-weight:700!important;}
+.syl-sem-tab{display:inline-flex;align-items:center;padding:5px 12px;border-radius:50px;border:1px solid #e2e8f0;background:white;font-size:.76rem;font-weight:500;cursor:pointer;transition:all .2s;color:var(--gray);text-decoration:none;white-space:nowrap;}
+.syl-sem-tab:hover{background:#f1f5f9;color:var(--navy);}
+.syl-sem-tab-active{background:var(--blue)!important;color:white!important;border-color:var(--blue)!important;font-weight:700!important;}
+.syl-dept-section{background:white;border-radius:16px;border:1px solid #e2e8f0;overflow:hidden;margin-bottom:24px;box-shadow:0 2px 12px rgba(10,22,40,.05);}
+.syl-dept-header{display:flex;align-items:center;gap:16px;padding:18px 24px;border-bottom:2px solid #f1f5f9;flex-wrap:wrap;}
+.syl-dept-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;}
+.syl-dept-name{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:800;color:var(--navy);margin-bottom:2px;}
+.syl-dept-sub{font-size:.75rem;color:var(--gray);}
+.syl-sem-block{border-bottom:1px solid #f1f5f9;}
+.syl-sem-block:last-child{border-bottom:none;}
+.syl-sem-header{display:flex;align-items:center;gap:10px;padding:12px 24px;background:#fafbfc;border-bottom:1px solid #f1f5f9;}
+.syl-sem-badge{display:inline-flex;align-items:center;justify-content:center;padding:4px 12px;background:linear-gradient(135deg,var(--navy),var(--blue));color:var(--accent);border-radius:50px;font-family:'Space Mono',monospace;font-size:.7rem;font-weight:700;white-space:nowrap;}
+.syl-sem-year{font-size:.74rem;color:var(--gray);font-family:'Space Mono',monospace;}
+.syl-add-subject-btn{margin-left:auto;font-size:.75rem;font-weight:700;color:var(--blue);background:rgba(26,58,107,.07);border:1px solid rgba(26,58,107,.15);border-radius:8px;padding:5px 12px;text-decoration:none;transition:all .2s;}
+.syl-add-subject-btn:hover{background:var(--blue);color:white;}
+.syl-sem-body{display:grid;grid-template-columns:260px 1fr;gap:0;}
+.syl-card-label{font-family:'Space Mono',monospace;font-size:.63rem;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;}
+.syl-curriculum-card{padding:16px 18px;border-right:2px solid #f1f5f9;background:#fdfcf8;}
+.syl-curr-title{font-size:.84rem;font-weight:600;color:var(--navy);line-height:1.4;margin-bottom:3px;}
+.syl-curr-year{font-size:.7rem;color:var(--gray);margin-bottom:6px;}
+.syl-curr-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.syl-curr-empty{display:flex;align-items:center;justify-content:center;min-height:60px;}
+.syl-subjects-area{padding:16px 18px;}
+.syl-subjects-grid{display:flex;flex-wrap:wrap;gap:10px;}
+.syl-subjects-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center;}
+.syl-subject-card{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:11px 13px;width:190px;display:flex;flex-direction:column;gap:4px;transition:box-shadow .2s;}
+.syl-subject-card:hover{box-shadow:0 4px 16px rgba(10,22,40,.1);border-color:#cbd5e1;}
+.syl-subject-inactive{opacity:.55;}
+.syl-subject-top{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.syl-subject-code{font-family:'Space Mono',monospace;font-size:.63rem;font-weight:700;color:white;background:var(--blue);border-radius:4px;padding:2px 6px;}
+.syl-subject-hidden-badge{font-size:.6rem;color:#92400e;background:#fef3c7;border:1px solid #fde68a;border-radius:4px;padding:1px 5px;font-weight:700;}
+.syl-subject-name{font-size:.82rem;font-weight:600;color:var(--navy);line-height:1.4;}
+.syl-subject-year{font-size:.67rem;color:var(--gray);}
+.syl-subject-actions{display:flex;align-items:center;gap:5px;margin-top:4px;flex-wrap:wrap;}
+.syl-subject-add-card{border:2px dashed #cbd5e1;border-radius:12px;padding:11px 13px;width:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;text-decoration:none;color:#94a3b8;transition:all .2s;background:transparent;}
+.syl-subject-add-card:hover{border-color:var(--accent);color:var(--navy);background:rgba(212,168,67,.05);}
+.syl-action-pdf{font-size:.69rem;color:var(--blue);background:rgba(26,58,107,.07);border:1px solid rgba(26,58,107,.12);border-radius:50px;padding:2px 8px;text-decoration:none;font-weight:700;transition:all .2s;}
+.syl-action-pdf:hover{background:var(--blue);color:white;}
+.syl-action-nopdf{font-size:.67rem;color:#94a3b8;font-style:italic;}
+.syl-action-edit{font-size:.69rem;color:#d97706;background:rgba(217,119,6,.07);border:1px solid rgba(217,119,6,.12);border-radius:50px;padding:2px 8px;text-decoration:none;font-weight:700;transition:all .2s;}
+.syl-action-edit:hover{background:#d97706;color:white;}
+.syl-action-del{font-size:.69rem;color:#dc2626;background:rgba(220,38,38,.07);border:1px solid rgba(220,38,38,.12);border-radius:50px;padding:2px 8px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;}
+.syl-action-del:hover{background:#dc2626;color:white;}
+.syl-cell-upload-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border:1.5px dashed #cbd5e1;border-radius:8px;font-size:.74rem;font-weight:600;color:#94a3b8;text-decoration:none;transition:all .2s;background:transparent;}
+.syl-cell-upload-btn:hover{border-color:var(--accent);color:var(--navy);background:rgba(212,168,67,.06);}
+@media(max-width:700px){.syl-sem-body{grid-template-columns:1fr;}.syl-curriculum-card{border-right:none;border-bottom:2px solid #f1f5f9;}}
 </style>
 
 <%- include('layout-bottom') %>

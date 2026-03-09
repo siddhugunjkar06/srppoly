@@ -1,0 +1,300 @@
+<%- include('partials/head') %>
+<%- include('partials/navbar') %>
+
+<!-- ── HERO ── -->
+<section style="background:linear-gradient(135deg,var(--navy) 0%,#1a3a6b 100%);padding:72px 0 52px;text-align:center;position:relative;overflow:hidden;">
+  <div style="position:absolute;top:-100px;left:-100px;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(212,168,67,.08),transparent 70%);pointer-events:none;"></div>
+  <div style="position:absolute;bottom:-80px;right:-80px;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle,rgba(212,168,67,.06),transparent 70%);pointer-events:none;"></div>
+  <div class="section-inner" style="position:relative;z-index:1;">
+    <div style="display:inline-flex;align-items:center;gap:7px;background:rgba(212,168,67,.12);border:1px solid rgba(212,168,67,.28);border-radius:50px;padding:5px 16px;margin-bottom:18px;">
+      <span style="color:var(--accent);font-size:.75rem;font-weight:700;font-family:'Space Mono',monospace;letter-spacing:.08em;">MSBTE AFFILIATED · ALL DEPARTMENTS</span>
+    </div>
+    <h1 style="font-family:'Playfair Display',serif;font-size:clamp(2rem,5vw,3rem);font-weight:900;color:white;margin-bottom:14px;line-height:1.2;">Syllabus &amp; Curriculum</h1>
+    <p style="color:rgba(255,255,255,.65);font-size:1rem;max-width:520px;margin:0 auto 32px;line-height:1.8;">Download MSBTE Curriculum and subject-wise syllabus PDFs for all departments across all 6 semesters.</p>
+
+    <%
+      const totalCurr = Object.values(grouped).reduce((a,sems)=>a+Object.values(sems).filter(s=>s.curriculum&&s.curriculum.pdfUrl).length,0);
+      const totalSub  = Object.values(grouped).reduce((a,sems)=>a+Object.values(sems).reduce((b,s)=>b+s.subjects.filter(x=>x.pdfUrl).length,0),0);
+    %>
+    <div style="display:flex;justify-content:center;gap:40px;flex-wrap:wrap;">
+      <div style="text-align:center;">
+        <div style="font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:900;color:var(--accent);"><%= DEPTS.length %></div>
+        <div style="font-size:.76rem;color:rgba(255,255,255,.5);font-weight:600;font-family:'Space Mono',monospace;">DEPARTMENTS</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:900;color:var(--accent);">6</div>
+        <div style="font-size:.76rem;color:rgba(255,255,255,.5);font-weight:600;font-family:'Space Mono',monospace;">SEMESTERS</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:900;color:var(--accent);"><%= totalCurr %></div>
+        <div style="font-size:.76rem;color:rgba(255,255,255,.5);font-weight:600;font-family:'Space Mono',monospace;">CURRICULUM PDFs</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:900;color:var(--accent);"><%= totalSub %></div>
+        <div style="font-size:.76rem;color:rgba(255,255,255,.5);font-weight:600;font-family:'Space Mono',monospace;">SUBJECT PDFs</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── STICKY FILTERS ── -->
+<div class="sp-filter-bar">
+  <div class="section-inner">
+    <div class="sp-filter-row">
+      <span class="sp-filter-label">DEPT</span>
+      <div class="sp-tabs-wrap">
+        <% const deptAll = [{ key:'All', name:'All Departments', icon:'🏛️' }];
+           Object.entries(DEPT_CONFIG).forEach(([k,v])=>deptAll.push({key:v.name,name:v.name,icon:v.icon}));
+           deptAll.forEach(d => { %>
+          <a href="/syllabus?dept=<%= encodeURIComponent(d.key) %>&sem=<%= activeSem %>"
+             class="sp-tab <%= activeDept===d.key?'sp-tab-on':'' %>">
+            <%= d.icon %> <%= d.key==='All'?'All':d.name.split(' ').slice(0,2).join(' ') %>
+          </a>
+        <% }) %>
+      </div>
+    </div>
+    <div class="sp-filter-row" style="margin-top:8px;">
+      <span class="sp-filter-label">SEM</span>
+      <div class="sp-tabs-wrap">
+        <% ['All',1,2,3,4,5,6].forEach(s => { %>
+          <a href="/syllabus?dept=<%= encodeURIComponent(activeDept) %>&sem=<%= s %>"
+             class="sp-stab <%= String(activeSem)===String(s)?'sp-stab-on':'' %>">
+            <%= s==='All'?'All Sems':'Sem '+s %>
+          </a>
+        <% }) %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MAIN CONTENT ── -->
+<section style="padding:40px 0 80px;background:#f8fafc;min-height:60vh;">
+  <div class="section-inner">
+
+    <%
+      const showDepts = activeDept==='All' ? DEPTS : [activeDept];
+      const showSems  = activeSem==='All'  ? SEMESTERS : [parseInt(activeSem)];
+    %>
+
+    <% showDepts.forEach(dept => {
+      const cfg      = Object.values(DEPT_CONFIG).find(c=>c.name===dept) || {};
+      const deptSlug = Object.keys(DEPT_CONFIG).find(k=>DEPT_CONFIG[k].name===dept);
+      const deptData = grouped[dept] || {};
+      const hasDocs  = showSems.some(s=>deptData[s]&&(deptData[s].curriculum||deptData[s].subjects.length>0));
+    %>
+
+    <div class="sp-dept-block">
+
+      <!-- Dept header -->
+      <div class="sp-dept-head">
+        <div class="sp-dept-icon" style="background:<%= cfg.color||'var(--navy)' %>"><%= cfg.icon||'📚' %></div>
+        <div style="flex:1;">
+          <h2 class="sp-dept-name"><%= dept %></h2>
+          <div class="sp-dept-meta">Diploma Engineering · 3 Years · MSBTE Affiliated</div>
+        </div>
+        <a href="/departments/<%= deptSlug %>" class="sp-dept-btn">View Department →</a>
+      </div>
+
+      <% if (!hasDocs) { %>
+        <div class="sp-empty"><div style="font-size:2rem;">📭</div><p>No syllabus uploaded yet for this department.</p></div>
+      <% } else { %>
+
+        <!-- Per-semester -->
+        <% showSems.forEach(sem => {
+          const semData    = deptData[sem] || { curriculum: null, subjects: [] };
+          const curriculum = semData.curriculum;
+          const subjects   = semData.subjects || [];
+          if (!curriculum && subjects.length===0) return;
+          const yearLabel  = sem<=2?'First Year':sem<=4?'Second Year':'Third Year';
+          const panelId    = `sp-${dept.replace(/\s/g,'')}-${sem}`;
+        %>
+
+        <div class="sp-sem-row">
+
+          <!-- Sem badge -->
+          <div class="sp-sem-badge-col">
+            <div class="sp-sem-badge">
+              <span class="sp-sem-num">SEM</span>
+              <span class="sp-sem-dig"><%= sem %></span>
+            </div>
+            <div class="sp-sem-year"><%= yearLabel %></div>
+          </div>
+
+          <!-- Cards area -->
+          <div class="sp-cards-area">
+
+            <!-- Curriculum card -->
+            <% if (curriculum) { %>
+            <div class="sp-curr-card">
+              <div class="sp-curr-badge">📋 MSBTE Curriculum</div>
+              <div class="sp-curr-title"><%= curriculum.title %></div>
+              <% if (curriculum.academicYear) { %><div class="sp-curr-meta">📅 <%= curriculum.academicYear %></div><% } %>
+              <% if (curriculum.description) { %><div class="sp-curr-desc"><%= curriculum.description %></div><% } %>
+              <div style="margin-top:auto;padding-top:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                <% if (curriculum.pdfUrl) { %>
+                  <a href="/download/syllabus/<%= curriculum._id %>" target="_blank" class="sp-dl-btn sp-dl-curr">⬇️ Download Curriculum</a>
+                <% } else { %>
+                  <span class="sp-no-pdf">📭 PDF not uploaded yet</span>
+                <% } %>
+                <% if (subjects.length>0) { %>
+                  <button class="sp-toggle-btn" id="btn-<%= panelId %>" onclick="spToggle('<%= panelId %>')">
+                    📂 View <%= subjects.length %> Subject PDF<%= subjects.length!==1?'s':'' %>
+                  </button>
+                <% } %>
+              </div>
+            </div>
+            <% } %>
+
+            <!-- Subject panel (shown inline when toggled) -->
+            <% if (subjects.length>0) { %>
+            <div class="sp-subj-panel" id="<%= panelId %>">
+              <div class="sp-subj-panel-head">
+                <span class="sp-subj-panel-label">📂 Subject-wise Syllabus — Sem <%= sem %>, <%= dept %></span>
+                <span class="sp-subj-count"><%= subjects.length %> subjects</span>
+              </div>
+              <div class="sp-subj-grid">
+                <% subjects.forEach(sub => { %>
+                <div class="sp-subj-card">
+                  <% if (sub.subjectCode) { %>
+                    <span class="sp-subj-code"><%= sub.subjectCode %></span>
+                  <% } %>
+                  <div class="sp-subj-name"><%= sub.subjectName %></div>
+                  <% if (sub.description) { %><div class="sp-subj-desc"><%= sub.description %></div><% } %>
+                  <div style="margin-top:auto;padding-top:10px;">
+                    <% if (sub.pdfUrl) { %>
+                      <a href="/download/subject-syllabus/<%= sub._id %>" target="_blank" class="sp-dl-btn sp-dl-subj">⬇️ Download</a>
+                    <% } else { %>
+                      <span class="sp-no-pdf" style="font-size:.72rem;">PDF coming soon</span>
+                    <% } %>
+                  </div>
+                </div>
+                <% }) %>
+              </div>
+            </div>
+
+            <!-- If no curriculum card but subjects exist, show toggle button standalone -->
+            <% if (!curriculum) { %>
+            <div class="sp-curr-card" style="background:#f8fafc;">
+              <div class="sp-curr-badge">📂 Subject-wise Syllabus</div>
+              <div class="sp-curr-title" style="color:var(--gray);font-weight:500;">Curriculum PDF not uploaded</div>
+              <div style="padding-top:12px;">
+                <button class="sp-toggle-btn" id="btn-<%= panelId %>" onclick="spToggle('<%= panelId %>')">
+                  📂 View <%= subjects.length %> Subject PDF<%= subjects.length!==1?'s':'' %>
+                </button>
+              </div>
+            </div>
+            <% } %>
+            <% } %>
+
+          </div><!-- .sp-cards-area -->
+        </div><!-- .sp-sem-row -->
+        <% }) %>
+
+      <% } %>
+    </div><!-- .sp-dept-block -->
+    <% }) %>
+
+    <!-- MSBTE note -->
+    <div class="sp-msbte-note">
+      <span style="font-size:1.4rem;">ℹ️</span>
+      <div>
+        <strong>About MSBTE Curriculum</strong>
+        All syllabi follow Maharashtra State Board of Technical Education (MSBTE) guidelines.
+        For official updates visit <a href="https://msbte.org.in" target="_blank">msbte.org.in</a>.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<style>
+/* ── Filter bar ── */
+.sp-filter-bar{background:white;border-bottom:2px solid #e2e8f0;position:sticky;top:70px;z-index:90;box-shadow:0 3px 14px rgba(10,22,40,.07);padding:14px 0;}
+.sp-filter-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.sp-filter-label{font-family:'Space Mono',monospace;font-size:.65rem;font-weight:700;color:var(--gray);letter-spacing:.08em;white-space:nowrap;}
+.sp-tabs-wrap{display:flex;gap:6px;flex-wrap:wrap;}
+.sp-tab{display:inline-flex;align-items:center;gap:4px;padding:5px 13px;border-radius:50px;border:1px solid #e2e8f0;background:white;font-size:.78rem;font-weight:500;color:var(--gray);text-decoration:none;transition:all .2s;white-space:nowrap;}
+.sp-tab:hover{background:#f1f5f9;color:var(--navy);border-color:#cbd5e1;}
+.sp-tab-on{background:var(--navy)!important;color:var(--accent)!important;border-color:var(--navy)!important;font-weight:700!important;}
+.sp-stab{display:inline-flex;align-items:center;padding:4px 11px;border-radius:50px;border:1px solid #e2e8f0;background:white;font-size:.74rem;font-weight:500;color:var(--gray);text-decoration:none;transition:all .2s;white-space:nowrap;}
+.sp-stab:hover{background:#f1f5f9;color:var(--navy);}
+.sp-stab-on{background:var(--blue)!important;color:white!important;border-color:var(--blue)!important;font-weight:700!important;}
+/* ── Dept block ── */
+.sp-dept-block{background:white;border-radius:20px;border:1px solid #e2e8f0;overflow:hidden;margin-bottom:28px;box-shadow:0 2px 16px rgba(10,22,40,.06);}
+.sp-dept-head{display:flex;align-items:center;gap:16px;padding:20px 28px;background:linear-gradient(135deg,#fafbfc,white);border-bottom:2px solid #f1f5f9;flex-wrap:wrap;}
+.sp-dept-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.7rem;flex-shrink:0;}
+.sp-dept-name{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:900;color:var(--navy);margin-bottom:3px;}
+.sp-dept-meta{font-size:.74rem;color:var(--gray);}
+.sp-dept-btn{padding:8px 16px;background:rgba(26,58,107,.07);border:1px solid rgba(26,58,107,.15);color:var(--blue);border-radius:10px;font-size:.78rem;font-weight:700;text-decoration:none;transition:all .2s;white-space:nowrap;}
+.sp-dept-btn:hover{background:var(--blue);color:white;}
+.sp-empty{padding:36px;text-align:center;color:var(--gray);display:flex;flex-direction:column;align-items:center;gap:8px;font-size:.88rem;}
+/* ── Semester row ── */
+.sp-sem-row{display:flex;gap:0;border-bottom:1px solid #f1f5f9;}
+.sp-sem-row:last-child{border-bottom:none;}
+.sp-sem-badge-col{width:100px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:20px 0 20px 20px;gap:6px;}
+.sp-sem-badge{display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--navy),var(--blue));border-radius:14px;padding:10px 14px;width:56px;}
+.sp-sem-num{font-family:'Space Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.1em;}
+.sp-sem-dig{font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:900;color:var(--accent);line-height:1;}
+.sp-sem-year{font-family:'Space Mono',monospace;font-size:.55rem;font-weight:700;color:var(--gray);text-align:center;writing-mode:horizontal-tb;}
+/* ── Cards area ── */
+.sp-cards-area{flex:1;padding:20px 24px 20px 16px;display:flex;flex-direction:column;gap:14px;}
+/* ── Curriculum card ── */
+.sp-curr-card{background:linear-gradient(135deg,#f8faff,#eef2ff);border:1px solid rgba(30,64,175,.12);border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;gap:5px;}
+.sp-curr-badge{display:inline-flex;align-items:center;gap:5px;font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;color:#1e40af;background:rgba(30,64,175,.08);border:1px solid rgba(30,64,175,.15);border-radius:50px;padding:3px 10px;margin-bottom:4px;width:fit-content;}
+.sp-curr-title{font-size:.95rem;font-weight:700;color:var(--navy);line-height:1.4;}
+.sp-curr-meta{font-size:.74rem;color:var(--gray);}
+.sp-curr-desc{font-size:.78rem;color:var(--gray);line-height:1.6;}
+/* ── Subject panel ── */
+.sp-subj-panel{display:none;background:linear-gradient(135deg,#fffbf0,#fef9ec);border:1.5px solid rgba(212,168,67,.25);border-radius:14px;overflow:hidden;animation:spSlide .22s ease;}
+.sp-subj-panel.open{display:block;}
+@keyframes spSlide{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+.sp-subj-panel-head{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;background:rgba(212,168,67,.08);border-bottom:1px solid rgba(212,168,67,.15);}
+.sp-subj-panel-label{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.05em;}
+.sp-subj-count{font-size:.68rem;font-weight:700;color:white;background:var(--accent);border-radius:50px;padding:2px 9px;}
+.sp-subj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:10px;padding:14px 16px;}
+.sp-subj-card{background:white;border:1px solid rgba(212,168,67,.18);border-radius:12px;padding:13px 14px;display:flex;flex-direction:column;gap:4px;transition:all .2s;}
+.sp-subj-card:hover{box-shadow:0 5px 16px rgba(212,168,67,.18);border-color:var(--accent);transform:translateY(-2px);}
+.sp-subj-code{display:inline-block;font-family:'Space Mono',monospace;font-size:.6rem;font-weight:700;color:white;background:var(--navy);border-radius:4px;padding:2px 7px;margin-bottom:3px;}
+.sp-subj-name{font-size:.86rem;font-weight:700;color:var(--navy);line-height:1.4;}
+.sp-subj-desc{font-size:.74rem;color:var(--gray);line-height:1.5;}
+/* ── Buttons ── */
+.sp-dl-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:10px;font-size:.8rem;font-weight:700;text-decoration:none;transition:all .22s;white-space:nowrap;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.sp-dl-curr{background:linear-gradient(135deg,var(--accent),var(--gold));color:var(--navy);box-shadow:0 4px 14px rgba(212,168,67,.28);}
+.sp-dl-curr:hover{transform:translateY(-2px);box-shadow:0 7px 20px rgba(212,168,67,.4);}
+.sp-dl-subj{background:var(--navy);color:var(--accent);font-size:.76rem;padding:7px 14px;}
+.sp-dl-subj:hover{background:var(--blue);transform:translateY(-1px);}
+.sp-toggle-btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;background:rgba(212,168,67,.1);border:1.5px solid rgba(212,168,67,.3);border-radius:10px;font-size:.78rem;font-weight:700;color:var(--navy);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;}
+.sp-toggle-btn:hover{background:rgba(212,168,67,.2);border-color:var(--accent);}
+.sp-toggle-btn.active{background:var(--accent);border-color:var(--accent);color:var(--navy);}
+.sp-no-pdf{font-size:.74rem;color:#94a3b8;font-style:italic;}
+/* ── MSBTE note ── */
+.sp-msbte-note{display:flex;gap:14px;align-items:flex-start;background:rgba(212,168,67,.06);border:1px solid rgba(212,168,67,.22);border-radius:14px;padding:18px 22px;margin-top:8px;font-size:.82rem;color:var(--gray);line-height:1.7;}
+.sp-msbte-note strong{display:block;font-family:'Playfair Display',serif;font-size:.9rem;color:var(--navy);margin-bottom:4px;}
+.sp-msbte-note a{color:var(--blue);font-weight:600;}
+/* ── Responsive ── */
+@media(max-width:700px){
+  .sp-sem-row{flex-direction:column;}
+  .sp-sem-badge-col{flex-direction:row;width:auto;padding:14px 20px 0;gap:10px;}
+  .sp-sem-year{writing-mode:horizontal-tb;}
+  .sp-cards-area{padding:14px 20px 20px;}
+  .sp-subj-grid{grid-template-columns:1fr 1fr;}
+  .sp-dept-head{padding:16px 20px;}
+}
+@media(max-width:480px){.sp-subj-grid{grid-template-columns:1fr;}}
+</style>
+
+<script>
+function spToggle(panelId) {
+  const panel = document.getElementById(panelId);
+  const btn   = document.getElementById('btn-' + panelId);
+  const isOpen = panel.classList.contains('open');
+  panel.classList.toggle('open', !isOpen);
+  btn.classList.toggle('active', !isOpen);
+  const count = panel.querySelectorAll('.sp-subj-card').length;
+  btn.textContent = isOpen
+    ? `📂 View ${count} Subject PDF${count!==1?'s':''}`
+    : `▲ Hide Subjects`;
+}
+</script>
+
+<%- include('partials/footer') %>

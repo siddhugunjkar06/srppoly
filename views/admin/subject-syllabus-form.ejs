@@ -1,0 +1,217 @@
+<%- include('layout-top') %>
+
+<div class="admin-page-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;">
+  <div>
+    <h1><%= subject ? '✏️ Edit Subject Syllabus' : '📂 Add Subject Syllabus' %></h1>
+    <p><%= subject ? `Editing: ${subject.subjectName} — Sem ${subject.semester}` : 'Add a subject-wise syllabus PDF for a semester' %></p>
+  </div>
+  <a href="/admin/syllabus" class="admin-btn admin-btn-secondary">← Back to Syllabus</a>
+</div>
+
+<div style="max-width:680px;">
+<form
+  action="<%= subject ? `/admin/subject-syllabus/${subject._id}?_method=PUT` : '/admin/subject-syllabus' %>"
+  method="POST"
+  enctype="multipart/form-data"
+  id="ssForm"
+>
+
+  <!-- Classification -->
+  <div class="admin-section">
+    <h2 class="admin-section-title">🗂️ Classification</h2>
+    <div class="ss-grid">
+
+      <div class="ss-field">
+        <label>Department <span class="req">*</span></label>
+        <select name="department" id="deptSelect" required>
+          <option value="">Select Department</option>
+          <% DEPTS.forEach(d => { %>
+            <option value="<%= d %>" <%= (subject&&subject.department===d)||prefillDept===d?'selected':'' %>><%= d %></option>
+          <% }) %>
+        </select>
+      </div>
+
+      <div class="ss-field">
+        <label>Semester <span class="req">*</span></label>
+        <select name="semester" id="semSelect" required>
+          <option value="">Select Semester</option>
+          <% SEMESTERS.forEach(s => { %>
+            <option value="<%= s %>" <%= (subject&&subject.semester===s)||parseInt(prefillSem)===s?'selected':'' %>>
+              Sem <%= s %> &nbsp;(<%= s<=2?'1st Year':s<=4?'2nd Year':'3rd Year' %>)
+            </option>
+          <% }) %>
+        </select>
+      </div>
+
+      <div class="ss-field">
+        <label>Subject Code <span class="ss-opt">(optional — e.g. 22318)</span></label>
+        <input type="text" name="subjectCode" placeholder="22318" value="<%= subject?(subject.subjectCode||''):'' %>">
+      </div>
+
+      <div class="ss-field">
+        <label>Academic Year <span class="ss-opt">(optional)</span></label>
+        <input type="text" name="academicYear" placeholder="2023-24" value="<%= subject?(subject.academicYear||''):'' %>">
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Subject Details -->
+  <div class="admin-section">
+    <h2 class="admin-section-title">📝 Subject Details</h2>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+
+      <div class="ss-field">
+        <label>Subject Name <span class="req">*</span></label>
+        <input type="text" name="subjectName" id="subjectNameInput" required
+          placeholder="e.g. Power Electronics"
+          value="<%= subject?subject.subjectName:'' %>">
+      </div>
+
+      <div class="ss-field">
+        <label>Description <span class="ss-opt">(optional)</span></label>
+        <textarea name="description" rows="2" placeholder="Brief note about this subject..."><%= subject?(subject.description||''):'' %></textarea>
+      </div>
+
+      <div class="ss-grid">
+        <div class="ss-field">
+          <label>Display Order</label>
+          <input type="number" name="order" min="0" value="<%= subject?subject.order:0 %>">
+          <span class="ss-hint">Lower = shown first in the list</span>
+        </div>
+        <div class="ss-field">
+          <label>Visibility</label>
+          <select name="isActive">
+            <option value="true"  <%= !subject||subject.isActive  ?'selected':'' %>>✅ Active</option>
+            <option value="false" <%= subject&&!subject.isActive  ?'selected':'' %>>⏸ Hidden</option>
+          </select>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PDF Upload -->
+  <div class="admin-section">
+    <h2 class="admin-section-title">📄 Subject Syllabus PDF</h2>
+
+    <% if (subject && (subject.pdfUrl || subject.pdfPublicId)) { %>
+      <div class="ss-pdf-current">
+        <span style="font-size:2rem;">📄</span>
+        <div style="flex:1;">
+          <div class="ss-pdf-name"><%= subject.pdfName || 'Uploaded PDF' %></div>
+          <div style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;">
+            <a href="/download/subject-syllabus/<%= subject._id %>" target="_blank" class="ss-pdf-view">👁️ View / Download</a>
+            <button type="button" class="ss-pdf-remove"
+              onclick="if(confirm('Remove this PDF?')) document.getElementById('ssRemoveForm').submit()">
+              🗑️ Remove
+            </button>
+          </div>
+          <p class="ss-hint" style="margin-top:6px;">Upload a new PDF below to replace it.</p>
+        </div>
+      </div>
+    <% } %>
+
+    <div class="ss-dropzone" id="ssDropzone" onclick="document.getElementById('ssPdfInput').click()">
+      <div id="ssDropHint">
+        <div style="font-size:2.2rem;margin-bottom:6px;">📂</div>
+        <p class="ss-drop-text"><%= subject&&subject.pdfUrl?'Drop new PDF to replace':'Click or drag PDF here' %></p>
+        <p class="ss-drop-sub">PDF only · Max 20MB</p>
+      </div>
+      <div id="ssPdfInfo" style="display:none;padding:14px;align-items:center;gap:12px;width:100%;">
+        <span style="font-size:1.8rem;">📄</span>
+        <div>
+          <div id="ssPdfName" style="font-size:.86rem;font-weight:700;color:var(--navy);"></div>
+          <div id="ssPdfSize" style="font-size:.72rem;color:var(--gray);margin-top:2px;"></div>
+        </div>
+        <button type="button" onclick="clearPDF(event)"
+          style="margin-left:auto;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.2);color:#dc2626;border-radius:8px;padding:4px 10px;font-size:.76rem;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700;">✕ Clear</button>
+      </div>
+    </div>
+    <input type="file" name="pdf" id="ssPdfInput" accept="application/pdf" style="display:none;">
+  </div>
+
+  <!-- Actions -->
+  <div class="ss-actions">
+    <button type="submit" class="admin-btn admin-btn-primary" id="ssSubmit" style="padding:12px 28px;">
+      <%= subject ? '✅ Update Subject' : '➕ Add Subject' %>
+    </button>
+    <a href="/admin/syllabus" class="admin-btn admin-btn-secondary">Cancel</a>
+    <% if (subject) { %>
+      <button type="button" class="admin-btn admin-btn-danger" style="margin-left:auto;"
+        onclick="if(confirm('Permanently delete this subject?')) document.getElementById('ssDeleteForm').submit()">
+        🗑️ Delete
+      </button>
+    <% } %>
+  </div>
+
+</form>
+
+<% if (subject && (subject.pdfUrl || subject.pdfPublicId)) { %>
+<form id="ssRemoveForm" action="/admin/subject-syllabus/<%= subject._id %>/remove-pdf" method="POST"></form>
+<% } %>
+<% if (subject) { %>
+<form id="ssDeleteForm" action="/admin/subject-syllabus/<%= subject._id %>?_method=DELETE" method="POST"></form>
+<% } %>
+</div>
+
+<style>
+.ss-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.ss-field{display:flex;flex-direction:column;gap:5px;}
+.ss-field label{font-size:.82rem;font-weight:700;color:var(--navy);}
+.ss-field input,.ss-field select,.ss-field textarea{padding:10px 13px;border:2px solid #e2e8f0;border-radius:10px;font-size:.88rem;font-family:'DM Sans',sans-serif;color:var(--text);transition:border-color .2s;outline:none;background:white;}
+.ss-field input:focus,.ss-field select:focus,.ss-field textarea:focus{border-color:var(--accent);}
+.ss-field textarea{resize:vertical;}
+.req{color:#dc2626;}
+.ss-opt{color:var(--gray);font-weight:400;font-size:.74rem;}
+.ss-hint{font-size:.72rem;color:var(--gray);}
+.ss-pdf-current{display:flex;gap:14px;background:rgba(26,58,107,.04);border:1px solid rgba(26,58,107,.12);border-radius:12px;padding:14px;margin-bottom:14px;}
+.ss-pdf-name{font-weight:700;font-size:.88rem;color:var(--navy);}
+.ss-pdf-view{padding:4px 11px;background:var(--blue);color:white;border-radius:8px;font-size:.76rem;font-weight:700;text-decoration:none;}
+.ss-pdf-remove{padding:4px 11px;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.2);color:#dc2626;border-radius:8px;font-size:.76rem;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.ss-dropzone{border:2px dashed #cbd5e1;border-radius:14px;min-height:110px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;background:#fafbfc;overflow:hidden;}
+.ss-dropzone:hover{border-color:var(--accent);background:rgba(212,168,67,.03);}
+#ssDropHint{text-align:center;padding:18px;pointer-events:none;}
+.ss-drop-text{font-size:.88rem;font-weight:600;color:var(--navy);margin:0 0 4px;}
+.ss-drop-sub{font-size:.72rem;color:var(--gray);margin:0;}
+.ss-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:white;padding:16px 18px;border-radius:14px;border:1px solid #e2e8f0;}
+@media(max-width:600px){.ss-grid{grid-template-columns:1fr;}}
+</style>
+
+<script>
+const ssInput   = document.getElementById('ssPdfInput');
+const ssDropHint= document.getElementById('ssDropHint');
+const ssPdfInfo = document.getElementById('ssPdfInfo');
+
+ssInput.addEventListener('change', () => {
+  const f = ssInput.files[0];
+  if (!f) return;
+  if (f.size > 20*1024*1024) { alert('Max 20MB'); ssInput.value=''; return; }
+  document.getElementById('ssPdfName').textContent = f.name;
+  document.getElementById('ssPdfSize').textContent = (f.size/1024/1024).toFixed(2)+' MB';
+  ssDropHint.style.display = 'none';
+  ssPdfInfo.style.display  = 'flex';
+});
+function clearPDF(e) {
+  e.stopPropagation();
+  ssInput.value = '';
+  ssDropHint.style.display = 'block';
+  ssPdfInfo.style.display  = 'none';
+}
+const zone = document.getElementById('ssDropzone');
+['dragenter','dragover'].forEach(ev => zone.addEventListener(ev, e=>{e.preventDefault();zone.style.borderColor='var(--accent)';}));
+['dragleave','drop'].forEach(ev => zone.addEventListener(ev, e=>{e.preventDefault();zone.style.borderColor='';}));
+zone.addEventListener('drop', e => {
+  const f = e.dataTransfer.files[0];
+  if (f && f.type==='application/pdf') {
+    const dt = new DataTransfer(); dt.items.add(f); ssInput.files = dt.files;
+    ssInput.dispatchEvent(new Event('change'));
+  } else { alert('Please drop a PDF file.'); }
+});
+document.getElementById('ssForm').addEventListener('submit', ()=>{
+  const btn = document.getElementById('ssSubmit');
+  btn.disabled = true; btn.textContent = '⏳ Saving…';
+});
+</script>
+
+<%- include('layout-bottom') %>

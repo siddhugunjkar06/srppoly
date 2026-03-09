@@ -8,14 +8,29 @@ const Faculty    = require('../models/Faculty');
 const Gallery    = require('../models/Gallery');
 const Grievance  = require('../models/Grievance');
 const Syllabus   = require('../models/Syllabus');
-const LabManual  = require('../models/LabManual');
-const { cloudinary, uploadFaculty, uploadGallery, uploadGrievancePDF, uploadSyllabusPDF, uploadLabManualPDF, destroyPDF } = require('../config/cloudinary');
+const LabManual        = require('../models/LabManual');
+const SubjectSyllabus  = require('../models/SubjectSyllabus');
+const { generateAdmissionReceipt } = require('../utils/generatePDF');
+const { cloudinary, uploadFaculty, uploadGallery, uploadGrievancePDF, uploadSyllabusPDF, uploadSubjectSyllabusPDF, uploadLabManualPDF, destroyPDF } = require('../config/cloudinary');
 
 // ── Auth Middleware ────────────────────────────────────────────────────────
+const INACTIVITY_LIMIT = 30 * 60 * 1000; // 30 minutes in ms
+
 const requireAuth = (req, res, next) => {
-  if (req.session.adminId) return next();
-  req.flash('error', 'Please log in to access the admin panel.');
-  res.redirect('/admin/login');
+  if (!req.session.adminId) {
+    req.flash('error', 'Please log in to access the admin panel.');
+    return res.redirect('/admin/login');
+  }
+  // Check inactivity
+  const now = Date.now();
+  if (req.session.lastActive && (now - req.session.lastActive) > INACTIVITY_LIMIT) {
+    req.session.destroy();
+    req.flash('error', 'Session expired due to inactivity. Please log in again.');
+    return res.redirect('/admin/login');
+  }
+  // Refresh last active timestamp on every request
+  req.session.lastActive = now;
+  next();
 };
 
 // ── LOGIN ──────────────────────────────────────────────────────────────────
@@ -36,6 +51,7 @@ router.post('/login', async (req, res) => {
 
     req.session.adminId = admin._id;
     req.session.adminName = admin.name;
+    req.session.lastActive = Date.now();
     req.flash('success', `Welcome back, ${admin.name}!`);
     res.redirect('/admin/dashboard');
   } catch (err) {
@@ -48,6 +64,14 @@ router.get('/logout', (req, res) => {
   req.session.destroy();
   res.redirect('/admin/login');
 });
+
+// ── SESSION PING (keep-alive from client) ─────────────────────────────────
+router.post('/ping', requireAuth, (req, res) => {
+  req.session.lastActive = Date.now();
+  res.json({ ok: true });
+});
+
+
 
 // ── SIGNUP ─────────────────────────────────────────────────────────────────
 router.get('/signup', (req, res) => {
@@ -153,6 +177,18 @@ router.get('/dashboard', requireAuth, async (req, res) => {
 router.get('/enquiries', requireAuth, async (req, res) => {
   const enquiries = await Enquiry.find().sort({ createdAt: -1 }).lean();
   res.render('admin/enquiries', { title: 'Enquiries — Admin', enquiries, adminName: req.session.adminName });
+});
+
+
+// ── ENQUIRY RECEIPT PDF ────────────────────────────────────────────────────
+router.get('/enquiries/:id/receipt', requireAuth, async (req, res) => {
+  try {
+    const enquiry = await Enquiry.findById(req.params.id).lean();
+    if (!enquiry) return res.status(404).send('Enquiry not found.');
+    generateAdmissionReceipt(enquiry, res);
+  } catch (err) {
+    res.status(500).send('Failed to generate receipt.');
+  }
 });
 
 router.post('/enquiries/:id/status', requireAuth, async (req, res) => {
@@ -684,11 +720,17 @@ const SYL_TYPES = ['MSBTE Curriculum'];
 // LIST — grouped by dept & semester
 router.get('/syllabus', requireAuth, async (req, res) => {
   try {
-    const { dept } = req.query;
+    const { dept, sem } = req.query;
     const filter = dept && dept !== 'All' ? { department: dept } : {};
     const docs = await Syllabus.find(filter).sort({ department:1, semester:1, type:1 }).lean();
 
-    // Group: { dept -> { sem -> { type -> doc } } }
+    // Subject syllabus filter
+    const subFilter = { ...filter };
+    if (sem && sem !== 'All') subFilter.semester = parseInt(sem);
+    const subjectDocs = await SubjectSyllabus.find(subFilter)
+      .sort({ department:1, semester:1, order:1, subjectName:1 }).lean();
+
+    // Group curriculum: { dept -> { sem -> { type -> doc } } }
     const grouped = {};
     DEPTS.forEach(d => { grouped[d] = {}; SEMESTERS.forEach(s => { grouped[d][s] = {}; }); });
     docs.forEach(doc => {
@@ -699,8 +741,9 @@ router.get('/syllabus', requireAuth, async (req, res) => {
 
     res.render('admin/syllabus', {
       title: 'Syllabus — Admin',
-      grouped, docs, DEPTS, SEMESTERS, SYL_TYPES,
+      grouped, docs, subjectDocs, DEPTS, SEMESTERS, SYL_TYPES,
       activeDept: dept || 'All',
+      activeSemFilter: sem || 'All',
       adminName: req.session.adminName
     });
   } catch (err) {
@@ -820,6 +863,141 @@ router.delete('/syllabus/:id', requireAuth, async (req, res) => {
     res.redirect('/admin/syllabus');
   } catch (err) {
     req.flash('error', 'Failed to delete record.');
+    res.redirect('/admin/syllabus');
+  }
+});
+
+
+// ══════════════════════════════════════════════════════════════════════════
+// ── SUBJECT SYLLABUS (per-subject PDF per semester) ───────────────────────
+// ══════════════════════════════════════════════════════════════════════════
+
+// LIST (ajax/filter used from syllabus page)
+router.get('/subject-syllabus', requireAuth, async (req, res) => {
+  try {
+    const { dept, sem } = req.query;
+    const filter = {};
+    if (dept && dept !== 'All') filter.department = dept;
+    if (sem  && sem  !== 'All') filter.semester   = parseInt(sem);
+    const subjects = await SubjectSyllabus.find(filter)
+      .sort({ department:1, semester:1, order:1, subjectName:1 }).lean();
+    res.json({ ok: true, subjects });
+  } catch (err) {
+    res.json({ ok: false, error: err.message });
+  }
+});
+
+// NEW FORM
+router.get('/subject-syllabus/new', requireAuth, (req, res) => {
+  res.render('admin/subject-syllabus-form', {
+    title: 'Add Subject Syllabus — Admin',
+    subject: null,
+    DEPTS, SEMESTERS,
+    prefillDept: req.query.dept || '',
+    prefillSem:  req.query.sem  || '',
+    adminName: req.session.adminName
+  });
+});
+
+// CREATE
+router.post('/subject-syllabus', requireAuth, uploadSubjectSyllabusPDF, async (req, res) => {
+  try {
+    const { department, semester, subjectCode, subjectName, description, academicYear, isActive, order } = req.body;
+    await SubjectSyllabus.create({
+      department, semester: parseInt(semester),
+      subjectCode: subjectCode || '',
+      subjectName, description, academicYear,
+      isActive: isActive !== 'false',
+      order: parseInt(order) || 0,
+      pdfUrl:      req.file ? req.file.cloudinaryUrl      : null,
+      pdfPublicId: req.file ? req.file.cloudinaryPublicId : null,
+      pdfName:     req.file ? req.file.originalname       : null,
+    });
+    req.flash('success', `"${subjectName}" subject syllabus added!`);
+    res.redirect(`/admin/syllabus?dept=${encodeURIComponent(department)}&sem=${semester}`);
+  } catch (e) {
+    req.flash('error', 'Failed to add. Check all fields.');
+    res.redirect('/admin/subject-syllabus/new');
+  }
+});
+
+// EDIT FORM
+router.get('/subject-syllabus/:id/edit', requireAuth, async (req, res) => {
+  try {
+    const subject = await SubjectSyllabus.findById(req.params.id).lean();
+    if (!subject) { req.flash('error', 'Subject not found.'); return res.redirect('/admin/syllabus'); }
+    res.render('admin/subject-syllabus-form', {
+      title: 'Edit Subject Syllabus — Admin',
+      subject,
+      DEPTS, SEMESTERS,
+      prefillDept: '', prefillSem: '',
+      adminName: req.session.adminName
+    });
+  } catch (err) {
+    req.flash('error', 'Subject not found.');
+    res.redirect('/admin/syllabus');
+  }
+});
+
+// UPDATE
+router.put('/subject-syllabus/:id', requireAuth, uploadSubjectSyllabusPDF, async (req, res) => {
+  try {
+    const existing = await SubjectSyllabus.findById(req.params.id);
+    if (!existing) { req.flash('error', 'Subject not found.'); return res.redirect('/admin/syllabus'); }
+
+    const { department, semester, subjectCode, subjectName, description, academicYear, isActive, order } = req.body;
+    const updateData = {
+      department, semester: parseInt(semester),
+      subjectCode: subjectCode || '',
+      subjectName, description, academicYear,
+      isActive: isActive !== 'false',
+      order: parseInt(order) || 0,
+      updatedAt: Date.now()
+    };
+
+    if (req.file) {
+      await destroyPDF(existing.pdfPublicId);
+      updateData.pdfUrl      = req.file.cloudinaryUrl;
+      updateData.pdfPublicId = req.file.cloudinaryPublicId;
+      updateData.pdfName     = req.file.originalname;
+    }
+
+    await SubjectSyllabus.findByIdAndUpdate(req.params.id, updateData);
+    req.flash('success', `"${subjectName}" updated!`);
+    res.redirect(`/admin/syllabus?dept=${encodeURIComponent(department)}&sem=${semester}`);
+  } catch (e) {
+    req.flash('error', 'Failed to update.');
+    res.redirect(`/admin/subject-syllabus/${req.params.id}/edit`);
+  }
+});
+
+// REMOVE PDF
+router.post('/subject-syllabus/:id/remove-pdf', requireAuth, async (req, res) => {
+  try {
+    const s = await SubjectSyllabus.findById(req.params.id);
+    if (s && s.pdfPublicId) {
+      await destroyPDF(s.pdfPublicId);
+      await SubjectSyllabus.findByIdAndUpdate(req.params.id, { pdfUrl: null, pdfPublicId: null, pdfName: null });
+    }
+    req.flash('success', 'PDF removed.');
+    res.redirect(`/admin/subject-syllabus/${req.params.id}/edit`);
+  } catch (err) {
+    req.flash('error', 'Failed to remove PDF.');
+    res.redirect('/admin/syllabus');
+  }
+});
+
+// DELETE
+router.delete('/subject-syllabus/:id', requireAuth, async (req, res) => {
+  try {
+    const s = await SubjectSyllabus.findById(req.params.id);
+    if (!s) { req.flash('error', 'Subject not found.'); return res.redirect('/admin/syllabus'); }
+    await destroyPDF(s.pdfPublicId);
+    await SubjectSyllabus.findByIdAndDelete(req.params.id);
+    req.flash('success', `"${s.subjectName}" deleted.`);
+    res.redirect(`/admin/syllabus?dept=${encodeURIComponent(s.department)}&sem=${s.semester}`);
+  } catch (err) {
+    req.flash('error', 'Failed to delete.');
     res.redirect('/admin/syllabus');
   }
 });

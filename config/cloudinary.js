@@ -88,7 +88,8 @@ async function destroyPDF(publicId) {
 }
 
 const uploadGrievancePDF = makePDFUpload('srpp-college/grievances');
-const uploadSyllabusPDF  = makePDFUpload('srpp-college/syllabus');
-const uploadLabManualPDF = makePDFUpload('srpp-college/lab-manuals');
+const uploadSyllabusPDF        = makePDFUpload('srpp-college/syllabus');
+const uploadSubjectSyllabusPDF = makePDFUpload('srpp-college/subject-syllabus');
+const uploadLabManualPDF       = makePDFUpload('srpp-college/lab-manuals');
 
-module.exports = { cloudinary, uploadFaculty, uploadGallery, uploadGrievancePDF, uploadSyllabusPDF, uploadLabManualPDF, destroyPDF };
+module.exports = { cloudinary, uploadFaculty, uploadGallery, uploadGrievancePDF, uploadSyllabusPDF, uploadSubjectSyllabusPDF, uploadLabManualPDF, destroyPDF };
