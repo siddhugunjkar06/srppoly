@@ -1,0 +1,218 @@
+<%- include('layout-top') %>
+
+<div class="admin-page-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;">
+  <div>
+    <h1><%= alumni ? `✏️ Edit — ${alumni.name}` : '🎓 Add Alumni' %></h1>
+    <p><%= alumni ? 'Update alumni details and photo' : 'Add a pass-out student to the alumni showcase' %></p>
+  </div>
+  <a href="/admin/alumni" class="admin-btn admin-btn-secondary">← Back to Alumni</a>
+</div>
+
+<div style="max-width:720px;">
+<form
+  action="<%= alumni ? `/admin/alumni/${alumni._id}?_method=PUT` : '/admin/alumni' %>"
+  method="POST" enctype="multipart/form-data" id="alumniForm">
+
+  <!-- Photo -->
+  <div class="admin-section">
+    <h2 class="admin-section-title">📸 Alumni Photo</h2>
+    <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;">
+      <div style="width:100px;height:100px;border-radius:50%;border:3px solid var(--accent);overflow:hidden;background:var(--navy);display:flex;align-items:center;justify-content:center;flex-shrink:0;" id="photoWrap">
+        <% if (alumni && alumni.imageUrl) { %>
+          <img src="<%= alumni.imageUrl %>" id="photoPreview" style="width:100%;height:100%;object-fit:cover;">
+        <% } else { %>
+          <span style="font-size:2.5rem;font-weight:700;color:var(--accent);font-family:'Playfair Display',serif;" id="photoPlaceholder">
+            <%= alumni ? alumni.name.charAt(0) : '?' %>
+          </span>
+          <img id="photoPreview" src="" style="display:none;width:100%;height:100%;object-fit:cover;">
+        <% } %>
+      </div>
+      <div>
+        <label for="photoInput" class="admin-btn admin-btn-secondary" style="cursor:pointer;">📁 Choose Photo</label>
+        <input type="file" name="photo" id="photoInput" accept="image/*" style="display:none;">
+        <p style="font-size:.74rem;color:var(--gray);margin-top:8px;">JPG, PNG or WebP · Max 5MB<br>Auto-cropped to square</p>
+        <% if (alumni && alumni.imageUrl) { %>
+          <p style="font-size:.72rem;color:var(--accent);">⚠️ New photo replaces current one</p>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Basic info -->
+  <div class="admin-section">
+    <h2 class="admin-section-title">👤 Student Details</h2>
+    <div class="al-grid">
+      <div class="al-field al-full">
+        <label>Full Name <span class="req">*</span></label>
+        <input type="text" name="name" required placeholder="e.g. Rahul Sharma"
+          value="<%= alumni ? alumni.name : '' %>">
+      </div>
+      <div class="al-field">
+        <label>Department <span class="req">*</span></label>
+        <select name="department" required>
+          <option value="">Select Department</option>
+          <% ALUMNI_DEPTS.forEach(d => { %>
+            <option value="<%= d %>" <%= (alumni&&alumni.department===d)||prefillDept===d?'selected':'' %>><%= d %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="al-field">
+        <label>Pass Out Year <span class="req">*</span></label>
+        <input type="number" name="passOutYear" required min="2000" max="2099"
+          placeholder="e.g. 2023"
+          value="<%= alumni ? alumni.passOutYear : (prefillYear||new Date().getFullYear()) %>">
+      </div>
+      <div class="al-field">
+        <label>Enrollment No.</label>
+        <input type="text" name="enrollmentNo" placeholder="e.g. 2021EE001"
+          value="<%= alumni ? (alumni.enrollmentNo||'') : '' %>">
+      </div>
+      <div class="al-field">
+        <label>Display Order</label>
+        <input type="number" name="order" min="0" value="<%= alumni ? alumni.order : 0 %>">
+      </div>
+    </div>
+    <div class="al-field" style="margin-top:4px;">
+      <label>Visibility</label>
+      <select name="isFeatured" style="max-width:200px;">
+        <option value="true"  <%= !alumni||alumni.isFeatured  ?'selected':'' %>>✅ Featured (public)</option>
+        <option value="false" <%= alumni&&!alumni.isFeatured  ?'selected':'' %>>⏸ Hidden</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Current Status -->
+  <div class="admin-section">
+    <h2 class="admin-section-title">💼 Current Status</h2>
+
+    <div class="al-field" style="margin-bottom:16px;">
+      <label>Status Type <span class="req">*</span></label>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;" id="statusTypeGroup">
+        <% [['job','💼 Employed'],['higher_education','🎓 Higher Education'],['other','🔹 Other']].forEach(([val,label]) => { %>
+          <label class="al-radio-card" id="rc-<%= val %>">
+            <input type="radio" name="statusType" value="<%= val %>"
+              <%= (alumni ? alumni.statusType : 'job') === val ? 'checked' : '' %>
+              onchange="toggleStatus('<%= val %>')">
+            <span><%= label %></span>
+          </label>
+        <% }) %>
+      </div>
+    </div>
+
+    <!-- Job fields -->
+    <div id="status-job" class="al-status-section">
+      <div class="al-grid">
+        <div class="al-field">
+          <label>Company Name</label>
+          <input type="text" name="companyName" placeholder="e.g. Tata Motors, TCS, Infosys"
+            value="<%= alumni ? (alumni.companyName||'') : '' %>">
+        </div>
+        <div class="al-field">
+          <label>Job Role / Designation</label>
+          <input type="text" name="jobRole" placeholder="e.g. Junior Engineer, Software Developer"
+            value="<%= alumni ? (alumni.jobRole||'') : '' %>">
+        </div>
+      </div>
+    </div>
+
+    <!-- Higher Education fields -->
+    <div id="status-higher_education" class="al-status-section" style="display:none;">
+      <div class="al-grid">
+        <div class="al-field">
+          <label>College / University Name</label>
+          <input type="text" name="collegeName" placeholder="e.g. COEP, Dr. BATU, MIT Aurangabad"
+            value="<%= alumni ? (alumni.collegeName||'') : '' %>">
+        </div>
+        <div class="al-field">
+          <label>Course / Program</label>
+          <input type="text" name="courseName" placeholder="e.g. B.E. Electrical, MCA"
+            value="<%= alumni ? (alumni.courseName||'') : '' %>">
+        </div>
+      </div>
+    </div>
+
+    <!-- Other fields -->
+    <div id="status-other" class="al-status-section" style="display:none;">
+      <div class="al-field">
+        <label>Current Status Description</label>
+        <input type="text" name="otherStatus" placeholder="e.g. Self-employed, Preparing for MPSC"
+          value="<%= alumni ? (alumni.otherStatus||'') : '' %>">
+      </div>
+    </div>
+  </div>
+
+  <!-- Message -->
+  <div class="admin-section">
+    <h2 class="admin-section-title">💬 Message / Testimonial</h2>
+    <div class="al-field">
+      <label>Short Message <span style="color:var(--gray);font-weight:400;font-size:.72rem;">(shown on public alumni page)</span></label>
+      <textarea name="message" rows="3"
+        placeholder="e.g. SRPP gave me the foundation to build my career in electrical engineering. Grateful for the faculty support."
+        style="padding:10px 13px;border:2px solid #e2e8f0;border-radius:10px;font-size:.86rem;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;resize:vertical;"><%= alumni ? (alumni.message||'') : '' %></textarea>
+      <span style="font-size:.7rem;color:var(--gray);">Max 200 characters recommended</span>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="ss-actions">
+    <button type="submit" class="admin-btn admin-btn-primary" style="padding:12px 28px;">
+      <%= alumni ? '✅ Update Alumni' : '🎓 Add Alumni' %>
+    </button>
+    <a href="/admin/alumni" class="admin-btn admin-btn-secondary">Cancel</a>
+    <% if (alumni) { %>
+      <button type="button" class="admin-btn admin-btn-danger" style="margin-left:auto;"
+        onclick="if(confirm('Remove <%= alumni.name %> from alumni?')) document.getElementById('alDeleteForm').submit()">
+        🗑️ Delete
+      </button>
+    <% } %>
+  </div>
+</form>
+
+<% if (alumni) { %>
+  <form id="alDeleteForm" action="/admin/alumni/<%= alumni._id %>?_method=DELETE" method="POST"></form>
+<% } %>
+</div>
+
+<style>
+.al-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:13px;}
+.al-field{display:flex;flex-direction:column;gap:5px;}
+.al-full{grid-column:1/-1;}
+.al-field label{font-size:.82rem;font-weight:700;color:var(--navy);}
+.al-field input,.al-field select{padding:10px 13px;border:2px solid #e2e8f0;border-radius:10px;font-size:.86rem;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;background:white;}
+.al-field input:focus,.al-field select:focus{border-color:var(--accent);}
+.req{color:#dc2626;}
+.al-radio-card{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border:2px solid #e2e8f0;border-radius:10px;cursor:pointer;font-size:.84rem;font-weight:600;color:var(--gray);transition:all .2s;background:white;}
+.al-radio-card:has(input:checked){border-color:var(--accent);background:rgba(212,168,67,.08);color:var(--navy);}
+.al-radio-card input{display:none;}
+.al-status-section{padding:4px 0;}
+@media(max-width:600px){.al-grid{grid-template-columns:1fr;}}
+</style>
+
+<script>
+// Photo preview
+document.getElementById('photoInput').addEventListener('change', function() {
+  const f = this.files[0];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const preview = document.getElementById('photoPreview');
+    const ph = document.getElementById('photoPlaceholder');
+    preview.src = e.target.result;
+    preview.style.display = 'block';
+    if (ph) ph.style.display = 'none';
+  };
+  reader.readAsDataURL(f);
+});
+
+// Status type toggle
+function toggleStatus(type) {
+  ['job','higher_education','other'].forEach(t => {
+    document.getElementById('status-'+t).style.display = t===type ? 'block' : 'none';
+  });
+}
+// Init on load
+const checked = document.querySelector('input[name="statusType"]:checked');
+if (checked) toggleStatus(checked.value);
+</script>
+
+<%- include('layout-bottom') %>

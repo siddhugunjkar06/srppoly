@@ -13,7 +13,8 @@ const SubjectSyllabus  = require('../models/SubjectSyllabus');
 const { generateAdmissionReceipt } = require('../utils/generatePDF');
 const { generateFeeReceiptPDF, generateBonafidePDF, numberToWords } = require('../utils/managementPDF');
 const { FeeReceipt, Bonafide } = require('../models/Student');
-const { cloudinary, uploadFaculty, uploadGallery, uploadGrievancePDF, uploadSyllabusPDF, uploadSubjectSyllabusPDF, uploadLabManualPDF, destroyPDF } = require('../config/cloudinary');
+const Alumni = require('../models/Alumni');
+const { cloudinary, uploadFaculty, uploadAlumni, uploadGallery, uploadGrievancePDF, uploadSyllabusPDF, uploadSubjectSyllabusPDF, uploadLabManualPDF, destroyPDF } = require('../config/cloudinary');
 
 // ── Auth Middleware ────────────────────────────────────────────────────────
 const INACTIVITY_LIMIT = 30 * 60 * 1000; // 30 minutes in ms
@@ -1442,6 +1443,172 @@ router.delete('/management/bonafides/:id', requireAuth, async (req, res) => {
   } catch (err) {
     req.flash('error', 'Delete failed.');
     res.redirect('/admin/management/bonafides');
+  }
+});
+
+
+// ══════════════════════════════════════════════════════════════════════════
+// ── ALUMNI ────────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
+
+const ALUMNI_DEPTS = ['Electrical Engineering','Computer Engineering','AI & Machine Learning','Electronics & Communication'];
+
+// LIST
+router.get('/alumni', requireAuth, async (req, res) => {
+  try {
+    const { dept, year } = req.query;
+    const filter = {};
+    if (dept && dept !== 'All') filter.department = dept;
+    if (year && year !== 'All') filter.passOutYear = parseInt(year);
+
+    const alumni = await Alumni.find(filter).sort({ passOutYear: -1, order: 1, name: 1 }).lean();
+
+    // Get unique years for filter dropdown
+    const years = await Alumni.distinct('passOutYear');
+    years.sort((a, b) => b - a);
+
+    // Group by year then department for display
+    const grouped = {};
+    alumni.forEach(a => {
+      const y = a.passOutYear;
+      if (!grouped[y]) grouped[y] = {};
+      if (!grouped[y][a.department]) grouped[y][a.department] = [];
+      grouped[y][a.department].push(a);
+    });
+
+    res.render('admin/alumni', {
+      title: 'Alumni — Admin',
+      alumni, grouped, years, ALUMNI_DEPTS,
+      activeDept: dept || 'All',
+      activeYear: year || 'All',
+      adminName: req.session.adminName
+    });
+  } catch (err) {
+    req.flash('error', 'Failed to load alumni.');
+    res.redirect('/admin/dashboard');
+  }
+});
+
+// NEW FORM
+router.get('/alumni/new', requireAuth, (req, res) => {
+  res.render('admin/alumni-form', {
+    title: 'Add Alumni — Admin',
+    alumni: null,
+    ALUMNI_DEPTS,
+    prefillDept: req.query.dept || '',
+    prefillYear: req.query.year || '',
+    adminName: req.session.adminName
+  });
+});
+
+// CREATE
+router.post('/alumni', requireAuth, (req, res) => {
+  uploadAlumni.single('photo')(req, res, async (err) => {
+    if (err) { req.flash('error', err.message); return res.redirect('/admin/alumni/new'); }
+    try {
+      const { name, department, enrollmentNo, passOutYear, statusType,
+              companyName, jobRole, collegeName, courseName, otherStatus,
+              message, isFeatured, order } = req.body;
+      await Alumni.create({
+        name, department, enrollmentNo,
+        passOutYear: parseInt(passOutYear),
+        statusType,
+        companyName: companyName || '',
+        jobRole: jobRole || '',
+        collegeName: collegeName || '',
+        courseName: courseName || '',
+        otherStatus: otherStatus || '',
+        message: message || '',
+        isFeatured: isFeatured !== 'false',
+        order: parseInt(order) || 0,
+        imageUrl:      req.file ? req.file.path     : null,
+        imagePublicId: req.file ? req.file.filename : null,
+      });
+      req.flash('success', `${name} added to alumni!`);
+      res.redirect('/admin/alumni');
+    } catch (e) {
+      req.flash('error', 'Failed to add alumni. Check all fields.');
+      res.redirect('/admin/alumni/new');
+    }
+  });
+});
+
+// EDIT FORM
+router.get('/alumni/:id/edit', requireAuth, async (req, res) => {
+  try {
+    const alumni = await Alumni.findById(req.params.id).lean();
+    if (!alumni) { req.flash('error', 'Alumni not found.'); return res.redirect('/admin/alumni'); }
+    res.render('admin/alumni-form', {
+      title: `Edit Alumni — ${alumni.name}`,
+      alumni, ALUMNI_DEPTS,
+      prefillDept: '', prefillYear: '',
+      adminName: req.session.adminName
+    });
+  } catch (err) {
+    req.flash('error', 'Not found.');
+    res.redirect('/admin/alumni');
+  }
+});
+
+// UPDATE
+router.put('/alumni/:id', requireAuth, (req, res) => {
+  uploadAlumni.single('photo')(req, res, async (err) => {
+    if (err) { req.flash('error', err.message); return res.redirect(`/admin/alumni/${req.params.id}/edit`); }
+    try {
+      const existing = await Alumni.findById(req.params.id);
+      if (!existing) { req.flash('error', 'Not found.'); return res.redirect('/admin/alumni'); }
+
+      const { name, department, enrollmentNo, passOutYear, statusType,
+              companyName, jobRole, collegeName, courseName, otherStatus,
+              message, isFeatured, order } = req.body;
+
+      const update = {
+        name, department, enrollmentNo,
+        passOutYear: parseInt(passOutYear),
+        statusType,
+        companyName: companyName || '',
+        jobRole: jobRole || '',
+        collegeName: collegeName || '',
+        courseName: courseName || '',
+        otherStatus: otherStatus || '',
+        message: message || '',
+        isFeatured: isFeatured !== 'false',
+        order: parseInt(order) || 0,
+        updatedAt: Date.now()
+      };
+
+      if (req.file) {
+        if (existing.imagePublicId) {
+          try { await cloudinary.uploader.destroy(existing.imagePublicId); } catch(e) {}
+        }
+        update.imageUrl      = req.file.path;
+        update.imagePublicId = req.file.filename;
+      }
+
+      await Alumni.findByIdAndUpdate(req.params.id, update);
+      req.flash('success', `${name} updated!`);
+      res.redirect('/admin/alumni');
+    } catch (e) {
+      req.flash('error', 'Update failed.');
+      res.redirect(`/admin/alumni/${req.params.id}/edit`);
+    }
+  });
+});
+
+// DELETE
+router.delete('/alumni/:id', requireAuth, async (req, res) => {
+  try {
+    const a = await Alumni.findById(req.params.id);
+    if (!a) { req.flash('error', 'Not found.'); return res.redirect('/admin/alumni'); }
+    if (a.imagePublicId) {
+      try { await cloudinary.uploader.destroy(a.imagePublicId); } catch(e) {}
+    }
+    await Alumni.findByIdAndDelete(req.params.id);
+    req.flash('success', `${a.name} removed from alumni.`);
+    res.redirect('/admin/alumni');
+  } catch (err) {
+    req.flash('error', 'Delete failed.');
+    res.redirect('/admin/alumni');
   }
 });
 

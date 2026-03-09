@@ -1,0 +1,121 @@
+<%- include('layout-top') %>
+
+<div class="admin-page-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;">
+  <div>
+    <h1>🎓 Alumni</h1>
+    <p>Manage pass-out student profiles — shown year-wise & department-wise on the public page</p>
+  </div>
+  <a href="/admin/alumni/new" class="admin-btn admin-btn-primary">+ Add Alumni</a>
+</div>
+
+<!-- Filters -->
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center;">
+  <span style="font-size:.72rem;font-weight:700;color:var(--gray);font-family:'Space Mono',monospace;">DEPT:</span>
+  <% ['All',...ALUMNI_DEPTS].forEach(d => { %>
+    <a href="/admin/alumni?dept=<%= encodeURIComponent(d) %>&year=<%= activeYear %>"
+       class="syl-tab <%= activeDept===d?'syl-tab-active':'' %>">
+      <%= d==='All'?'🏛️ All':d.split(' ').slice(0,2).join(' ') %>
+    </a>
+  <% }) %>
+</div>
+<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:24px;align-items:center;">
+  <span style="font-size:.72rem;font-weight:700;color:var(--gray);font-family:'Space Mono',monospace;">YEAR:</span>
+  <a href="/admin/alumni?dept=<%= encodeURIComponent(activeDept) %>&year=All"
+     class="syl-sem-tab <%= activeYear==='All'?'syl-sem-tab-active':'' %>">All Years</a>
+  <% years.forEach(y => { %>
+    <a href="/admin/alumni?dept=<%= encodeURIComponent(activeDept) %>&year=<%= y %>"
+       class="syl-sem-tab <%= String(activeYear)===String(y)?'syl-sem-tab-active':'' %>"><%= y %></a>
+  <% }) %>
+</div>
+
+<!-- Grouped display -->
+<% if (alumni.length === 0) { %>
+  <div style="background:white;border-radius:14px;border:1px solid #e2e8f0;padding:48px;text-align:center;color:var(--gray);">
+    <div style="font-size:2.5rem;margin-bottom:12px;">🎓</div>
+    <div style="font-size:.9rem;">No alumni records found. <a href="/admin/alumni/new" style="color:var(--blue);">Add the first one →</a></div>
+  </div>
+<% } %>
+
+<% Object.keys(grouped).sort((a,b)=>b-a).forEach(year => { %>
+  <div style="background:white;border-radius:16px;border:1px solid #e2e8f0;overflow:hidden;margin-bottom:22px;box-shadow:0 2px 12px rgba(10,22,40,.05);">
+
+    <!-- Year header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 22px;background:linear-gradient(135deg,var(--navy),var(--blue));flex-wrap:wrap;gap:10px;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="background:rgba(212,168,67,.2);border:1px solid rgba(212,168,67,.4);border-radius:10px;padding:6px 14px;">
+          <span style="font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:900;color:var(--accent);"><%= year %></span>
+        </div>
+        <div>
+          <div style="font-size:.82rem;font-weight:700;color:white;">Pass Out Batch</div>
+          <div style="font-size:.7rem;color:rgba(255,255,255,.5);">
+            <%= Object.values(grouped[year]).reduce((a,b)=>a+b.length,0) %> alumni across <%= Object.keys(grouped[year]).length %> department(s)
+          </div>
+        </div>
+      </div>
+      <a href="/admin/alumni/new?year=<%= year %>" class="admin-btn admin-btn-sm" style="background:rgba(212,168,67,.2);color:var(--accent);border:1px solid rgba(212,168,67,.3);">+ Add to <%= year %></a>
+    </div>
+
+    <!-- Per department -->
+    <% Object.keys(grouped[year]).forEach(dept => { %>
+      <div style="border-bottom:1px solid #f1f5f9;">
+        <div style="padding:10px 22px;background:#fafbfc;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-size:.78rem;font-weight:700;color:var(--navy);">
+            <% const deptIcons = {'Electrical Engineering':'⚡','Computer Engineering':'💻','AI & Machine Learning':'🤖','Electronics & Communication':'📡'}; %>
+            <%= deptIcons[dept]||'📚' %> <%= dept %>
+          </span>
+          <span style="font-family:'Space Mono',monospace;font-size:.65rem;color:var(--gray);"><%= grouped[year][dept].length %> / 5 shown</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0;">
+          <% grouped[year][dept].forEach((a,i) => { %>
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 22px;border-right:1px solid #f1f5f9;border-bottom:1px solid #f1f5f9;background:<%= i%2===0?'white':'#fafbfc' %>;">
+              <!-- Photo -->
+              <div style="width:44px;height:44px;border-radius:50%;flex-shrink:0;overflow:hidden;border:2px solid var(--accent);background:var(--navy);display:flex;align-items:center;justify-content:center;">
+                <% if (a.imageUrl) { %>
+                  <img src="<%= a.imageUrl %>" alt="<%= a.name %>" style="width:100%;height:100%;object-fit:cover;">
+                <% } else { %>
+                  <span style="font-size:1.1rem;font-weight:700;color:var(--accent);font-family:'Playfair Display',serif;"><%= a.name.charAt(0) %></span>
+                <% } %>
+              </div>
+              <!-- Info -->
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:.86rem;font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><%= a.name %></div>
+                <div style="font-size:.72rem;color:var(--gray);">
+                  <% if (a.statusType==='job') { %>
+                    💼 <%= a.companyName || '—' %><% if (a.jobRole) { %> · <%= a.jobRole %><% } %>
+                  <% } else if (a.statusType==='higher_education') { %>
+                    🎓 <%= a.collegeName || '—' %>
+                  <% } else { %>
+                    <%= a.otherStatus || '—' %>
+                  <% } %>
+                </div>
+                <% if (!a.isFeatured) { %><span style="font-size:.6rem;color:#92400e;background:#fef3c7;border-radius:4px;padding:1px 5px;font-weight:700;">Hidden</span><% } %>
+              </div>
+              <!-- Actions -->
+              <div style="display:flex;gap:5px;flex-shrink:0;">
+                <a href="/admin/alumni/<%= a._id %>/edit" class="syl-action-edit">✏️</a>
+                <form action="/admin/alumni/<%= a._id %>?_method=DELETE" method="POST" onsubmit="return confirm('Remove <%= a.name %>?')" style="display:inline;">
+                  <button type="submit" class="syl-action-del">🗑️</button>
+                </form>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+<% }) %>
+
+<style>
+.syl-tab{display:inline-flex;align-items:center;gap:4px;padding:5px 12px;border-radius:50px;border:1px solid #e2e8f0;background:white;font-size:.78rem;font-weight:500;color:var(--gray);text-decoration:none;transition:all .2s;white-space:nowrap;}
+.syl-tab:hover{background:#f1f5f9;color:var(--navy);}
+.syl-tab-active{background:var(--navy)!important;color:var(--accent)!important;border-color:var(--navy)!important;font-weight:700!important;}
+.syl-sem-tab{display:inline-flex;align-items:center;padding:4px 11px;border-radius:50px;border:1px solid #e2e8f0;background:white;font-size:.74rem;font-weight:500;color:var(--gray);text-decoration:none;transition:all .2s;white-space:nowrap;}
+.syl-sem-tab:hover{background:#f1f5f9;color:var(--navy);}
+.syl-sem-tab-active{background:var(--blue)!important;color:white!important;border-color:var(--blue)!important;font-weight:700!important;}
+.syl-action-edit{font-size:.7rem;color:#d97706;background:rgba(217,119,6,.07);border:1px solid rgba(217,119,6,.12);border-radius:50px;padding:3px 9px;text-decoration:none;font-weight:700;transition:all .2s;}
+.syl-action-edit:hover{background:#d97706;color:white;}
+.syl-action-del{font-size:.7rem;color:#dc2626;background:rgba(220,38,38,.07);border:1px solid rgba(220,38,38,.12);border-radius:50px;padding:3px 9px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;}
+.syl-action-del:hover{background:#dc2626;color:white;}
+</style>
+
+<%- include('layout-bottom') %>

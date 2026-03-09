@@ -92,4 +92,19 @@ const uploadSyllabusPDF        = makePDFUpload('srpp-college/syllabus');
 const uploadSubjectSyllabusPDF = makePDFUpload('srpp-college/subject-syllabus');
 const uploadLabManualPDF       = makePDFUpload('srpp-college/lab-manuals');
 
-module.exports = { cloudinary, uploadFaculty, uploadGallery, uploadGrievancePDF, uploadSyllabusPDF, uploadSubjectSyllabusPDF, uploadLabManualPDF, destroyPDF };
+
+// Alumni photo uploader
+const uploadAlumni = multer({
+  storage: new CloudinaryStorage({
+    cloudinary,
+    params: {
+      folder: 'srpp-college/alumni',
+      allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+      transformation: [{ width: 400, height: 400, crop: 'fill', gravity: 'face' }],
+    },
+  }),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_, f, cb) => f.mimetype.startsWith('image/') ? cb(null, true) : cb(new Error('Images only')),
+});
+
+module.exports = { cloudinary, uploadFaculty, uploadAlumni, uploadGallery, uploadGrievancePDF, uploadSyllabusPDF, uploadSubjectSyllabusPDF, uploadLabManualPDF, destroyPDF };

@@ -11,6 +11,7 @@ const Grievance  = require('../models/Grievance');
 const Syllabus   = require('../models/Syllabus');
 const LabManual        = require('../models/LabManual');
 const SubjectSyllabus  = require('../models/SubjectSyllabus');
+const Alumni           = require('../models/Alumni');
 
 const DEPT_CONFIG = {
   'electrical-engineering': {
@@ -217,6 +218,43 @@ router.get('/syllabus', async (req, res) => {
       activeDept: dept || 'All',
       activeSem:  sem  || 'All',
       currentPath: '/syllabus',
+    });
+  } catch (err) {
+    console.error(err);
+    res.redirect('/');
+  }
+});
+
+
+// ── PUBLIC ALUMNI PAGE ─────────────────────────────────────────────────────
+router.get('/alumni', async (req, res) => {
+  try {
+    const { dept, year } = req.query;
+    const DEPTS = ['Electrical Engineering','Computer Engineering','AI & Machine Learning','Electronics & Communication'];
+
+    const filter = { isFeatured: true };
+    if (dept && dept !== 'All') filter.department = dept;
+    if (year && year !== 'All') filter.passOutYear = parseInt(year);
+
+    const alumni = await Alumni.find(filter).sort({ passOutYear: -1, order: 1, name: 1 }).lean();
+    const years  = await Alumni.distinct('passOutYear', { isFeatured: true });
+    years.sort((a, b) => b - a);
+
+    // Group: year -> dept -> top 5 alumni
+    const grouped = {};
+    alumni.forEach(a => {
+      const y = a.passOutYear;
+      if (!grouped[y]) grouped[y] = {};
+      if (!grouped[y][a.department]) grouped[y][a.department] = [];
+      if (grouped[y][a.department].length < 5) grouped[y][a.department].push(a);
+    });
+
+    res.render('alumni', {
+      title: 'Alumni — SRPP Polytechnic',
+      grouped, years, DEPTS, DEPT_CONFIG,
+      activeDept: dept || 'All',
+      activeYear: year || 'All',
+      currentPath: '/alumni',
     });
   } catch (err) {
     console.error(err);
