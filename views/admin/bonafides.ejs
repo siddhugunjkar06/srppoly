@@ -1,0 +1,35 @@
+<%- include('layout-top') %>
+<div class="admin-page-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;">
+  <div><h1>📜 Bonafide Certificates</h1><p><%= bonafides.length %> records found</p></div>
+  <a href="/admin/management/bonafides/new" class="admin-btn admin-btn-primary">+ New Certificate</a>
+</div>
+<form method="GET" style="margin-bottom:18px;display:flex;gap:10px;">
+  <input type="text" name="q" value="<%= q %>" placeholder="Search by student name..." style="flex:1;padding:9px 14px;border:2px solid #e2e8f0;border-radius:10px;font-size:.86rem;font-family:'DM Sans',sans-serif;outline:none;">
+  <button type="submit" class="admin-btn admin-btn-secondary">Search</button>
+  <% if (q) { %><a href="/admin/management/bonafides" class="admin-btn admin-btn-secondary">Clear</a><% } %>
+</form>
+<div style="background:white;border-radius:14px;border:1px solid #e2e8f0;overflow:hidden;box-shadow:0 2px 12px rgba(10,22,40,.05);">
+  <div style="display:grid;grid-template-columns:80px 1fr 80px 100px 100px 130px;background:var(--navy);color:var(--accent);font-family:'Space Mono',monospace;font-size:.65rem;font-weight:700;text-transform:uppercase;padding:10px 18px;gap:8px;letter-spacing:.04em;">
+    <span>Serial No.</span><span>Student</span><span>Year</span><span>Course</span><span>Date</span><span>Actions</span>
+  </div>
+  <% if (bonafides.length === 0) { %>
+    <div style="padding:36px;text-align:center;color:var(--gray);">No bonafide certificates found.</div>
+  <% } %>
+  <% bonafides.forEach((b,i) => { %>
+    <div style="display:grid;grid-template-columns:80px 1fr 80px 100px 100px 130px;align-items:center;padding:10px 18px;border-bottom:1px solid #f8fafc;gap:8px;background:<%= i%2===0?'white':'#fafbfc' %>;">
+      <span style="font-family:'Space Mono',monospace;font-size:.68rem;font-weight:700;color:var(--navy);">#<%= b.serialNo %></span>
+      <div>
+        <div style="font-size:.86rem;font-weight:600;color:var(--navy);"><%= b.studentName %></div>
+        <div style="font-size:.7rem;color:var(--gray);">Acad: <%= b.academicYearFrom ? `20${b.academicYearFrom.slice(-2)}-20${b.academicYearTo.slice(-2)}` : '—' %></div>
+      </div>
+      <span style="font-size:.82rem;font-weight:700;color:#5c1a5c;"><%= b.yearOfStudy %></span>
+      <span style="font-size:.78rem;color:var(--gray);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><%= (b.course||'—').split(' ').slice(0,2).join(' ') %></span>
+      <span style="font-size:.76rem;color:var(--gray);font-family:'Space Mono',monospace;"><%= b.date %></span>
+      <div style="display:flex;gap:5px;">
+        <a href="/admin/management/bonafides/<%= b._id %>" style="padding:3px 9px;background:var(--navy);color:var(--accent);border-radius:6px;font-size:.7rem;font-weight:700;text-decoration:none;">View</a>
+        <a href="/admin/management/bonafides/<%= b._id %>/download" target="_blank" style="padding:3px 9px;background:rgba(6,95,70,.1);color:#065f46;border:1px solid rgba(6,95,70,.2);border-radius:6px;font-size:.7rem;font-weight:700;text-decoration:none;">⬇️ PDF</a>
+      </div>
+    </div>
+  <% }) %>
+</div>
+<%- include('layout-bottom') %>

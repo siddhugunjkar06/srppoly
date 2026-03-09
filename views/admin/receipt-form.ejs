@@ -1,0 +1,170 @@
+<%- include('layout-top') %>
+
+<div class="admin-page-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;">
+  <div>
+    <h1><%= receipt ? `✏️ Edit Receipt #${receipt.receiptNo}` : '🧾 New Fee Receipt' %></h1>
+    <p>Fills the official SRPP cash receipt format exactly</p>
+  </div>
+  <a href="/admin/management/receipts" class="admin-btn admin-btn-secondary">← Back</a>
+</div>
+
+<div style="max-width:800px;">
+<form action="<%= receipt ? `/admin/management/receipts/${receipt._id}?_method=PUT` : '/admin/management/receipts' %>"
+      method="POST" id="receiptForm">
+
+  <!-- Header Details -->
+  <div class="admin-section">
+    <h2 class="admin-section-title">🎓 Student Details</h2>
+    <div class="rf-grid3">
+      <div class="rf-field">
+        <label>Receipt No. <span style="color:var(--gray);font-weight:400;font-size:.72rem;">(auto-assigned)</span></label>
+        <input type="text" value="<%= receipt ? receipt.receiptNo : 'Auto' %>" disabled style="background:#f8fafc;color:var(--gray);">
+      </div>
+      <div class="rf-field">
+        <label>Date <span class="req">*</span></label>
+        <input type="text" name="date" placeholder="DD/MM/YYYY" required
+          value="<%= receipt ? receipt.date : '' %>">
+      </div>
+    </div>
+    <div class="rf-grid3">
+      <div class="rf-field" style="grid-column:1/3;">
+        <label>Name of Student <span class="req">*</span></label>
+        <input type="text" name="studentName" required placeholder="Full name"
+          value="<%= receipt ? receipt.studentName : '' %>">
+      </div>
+      <div class="rf-field">
+        <label>Class</label>
+        <input type="text" name="className" placeholder="e.g. FY/SY/TY"
+          value="<%= receipt ? receipt.className : '' %>">
+      </div>
+    </div>
+    <div class="rf-grid3">
+      <div class="rf-field">
+        <label>Course</label>
+        <select name="course">
+          <option value="">Select</option>
+          <% ['CO','EE','AN','ET'].forEach(c => { %>
+            <option value="<%= c %>" <%= receipt && receipt.course===c ? 'selected' : '' %>><%= c %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="rf-field" style="grid-column:2/4;">
+        <label>Enrollment No.</label>
+        <input type="text" name="enrollmentNo" placeholder="Enrollment number"
+          value="<%= receipt ? receipt.enrollmentNo : '' %>">
+      </div>
+    </div>
+  </div>
+
+  <!-- Fee Items -->
+  <div class="admin-section">
+    <h2 class="admin-section-title">💰 Fee Items</h2>
+    <p style="font-size:.78rem;color:var(--gray);margin-bottom:14px;">Leave 0 for items not applicable. Total is calculated automatically.</p>
+
+    <div class="rf-fee-table">
+      <div class="rf-fee-header">
+        <span>Sr.No.</span><span>Description / Item</span><span>Amount (₹)</span>
+      </div>
+      <%
+      const feeFields = [
+        {n:1, label:'Tution Fees',                     key:'tuitionFees'},
+        {n:2, label:'Development Fees',                 key:'developmentFees'},
+        {n:3, label:'Admission Fees',                   key:'admissionFees'},
+        {n:4, label:'Library Deposit',                  key:'libraryDeposit'},
+        {n:5, label:'Library Fees',                     key:'libraryFees'},
+        {n:6, label:'Laboratory Fees',                  key:'laboratoryFees'},
+        {n:7, label:'Gymkhana',                         key:'gymkhana'},
+        {n:8, label:"Student's Council",                key:'studentsCouncil'},
+        {n:9, label:'College Magazine',                 key:'collegeMagazine'},
+        {n:10,label:'Identity Card & Insurance',        key:'identityCardInsurance'},
+        {n:11,label:'Cultural Activities',              key:'culturalActivities'},
+        {n:12,label:"Student's Welfare",                key:'studentsWelfare'},
+        {n:13,label:'Eligibility Fees/Enrollment Fees', key:'eligibilityFees'},
+        {n:14,label:'MSBTE Exam/ University Fees',      key:'msbteExamFees'},
+        {n:15,label:'Internet Fees',                    key:'internetFees'},
+        {n:16,label:'Alumni Charges',                   key:'alumniCharges'},
+        {n:17,label:'T.C. Fees',                        key:'tcFees'},
+        {n:18,label:'Fine',                             key:'fine'},
+        {n:19,label:'Bonafide Fees',                    key:'bonafideFees'},
+        {n:20,label:'Other',                            key:'other'},
+        {n:21,label:'(Extra)',                          key:'extra1'},
+        {n:22,label:'(Extra)',                          key:'extra2'},
+      ];
+      %>
+      <% feeFields.forEach(f => { %>
+        <div class="rf-fee-row" data-key="<%= f.key %>">
+          <span class="rf-fee-sr"><%= f.n %></span>
+          <span class="rf-fee-label"><%= f.label %></span>
+          <input type="number" name="<%= f.key %>" min="0" step="0.01" class="rf-fee-input fee-amt"
+            value="<%= receipt && receipt.fees ? (receipt.fees[f.key]||0) : 0 %>"
+            onchange="recalc()">
+        </div>
+      <% }) %>
+      <div class="rf-fee-total-row">
+        <span></span><span style="font-weight:800;text-align:right;">Total ₹</span>
+        <span id="totalDisplay" style="font-family:'Space Mono',monospace;font-weight:900;color:var(--navy);">
+          <%= receipt ? (receipt.total||0).toLocaleString('en-IN') : '0' %>
+        </span>
+      </div>
+    </div>
+    <input type="hidden" name="total" id="totalHidden" value="<%= receipt ? receipt.total||0 : 0 %>">
+  </div>
+
+  <!-- Rs in Words -->
+  <div class="admin-section">
+    <h2 class="admin-section-title">✍️ Amount in Words</h2>
+    <div class="rf-field">
+      <label>Rs in Words <span style="color:var(--gray);font-weight:400;font-size:.72rem;">(auto-filled, editable)</span></label>
+      <input type="text" name="amountInWords" id="amountWords" placeholder="Auto-calculated on save"
+        value="<%= receipt ? receipt.amountInWords : '' %>" style="font-size:.84rem;">
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="ss-actions">
+    <button type="submit" class="admin-btn admin-btn-primary" style="padding:12px 28px;">
+      <%= receipt ? '✅ Update Receipt' : '🧾 Create Receipt' %>
+    </button>
+    <a href="/admin/management/receipts" class="admin-btn admin-btn-secondary">Cancel</a>
+    <% if (receipt) { %>
+      <a href="/admin/management/receipts/<%= receipt._id %>/download" class="admin-btn" style="background:#065f46;color:white;margin-left:auto;" target="_blank">⬇️ Download PDF</a>
+      <button type="button" class="admin-btn admin-btn-danger"
+        onclick="if(confirm('Delete this receipt?')) document.getElementById('rfDeleteForm').submit()">🗑️ Delete</button>
+    <% } %>
+  </div>
+</form>
+<% if (receipt) { %>
+  <form id="rfDeleteForm" action="/admin/management/receipts/<%= receipt._id %>?_method=DELETE" method="POST"></form>
+<% } %>
+</div>
+
+<style>
+.rf-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px;margin-bottom:13px;}
+.rf-field{display:flex;flex-direction:column;gap:5px;}
+.rf-field label{font-size:.82rem;font-weight:700;color:var(--navy);}
+.rf-field input,.rf-field select{padding:9px 12px;border:2px solid #e2e8f0;border-radius:10px;font-size:.86rem;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;background:white;}
+.rf-field input:focus,.rf-field select:focus{border-color:var(--accent);}
+.req{color:#dc2626;}
+.rf-fee-table{border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;}
+.rf-fee-header{display:grid;grid-template-columns:44px 1fr 110px;background:var(--navy);color:var(--accent);font-family:'Space Mono',monospace;font-size:.68rem;font-weight:700;text-transform:uppercase;padding:8px 12px;gap:8px;}
+.rf-fee-row{display:grid;grid-template-columns:44px 1fr 110px;align-items:center;padding:5px 12px;border-bottom:1px solid #f1f5f9;gap:8px;transition:background .15s;}
+.rf-fee-row:hover{background:#fafbfc;}
+.rf-fee-sr{font-family:'Space Mono',monospace;font-size:.7rem;font-weight:700;color:var(--gray);text-align:center;}
+.rf-fee-label{font-size:.82rem;color:var(--navy);}
+.rf-fee-input{padding:4px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:.84rem;font-family:'Space Mono',monospace;text-align:right;width:100%;outline:none;transition:border-color .15s;}
+.rf-fee-input:focus{border-color:var(--accent);background:#fffbf0;}
+.rf-fee-total-row{display:grid;grid-template-columns:44px 1fr 110px;align-items:center;padding:8px 12px;background:#f8fafc;border-top:2px solid #e2e8f0;gap:8px;font-size:.9rem;}
+@media(max-width:600px){.rf-grid3{grid-template-columns:1fr;}}
+</style>
+
+<script>
+function recalc() {
+  const inputs = document.querySelectorAll('.fee-amt');
+  let total = 0;
+  inputs.forEach(i => { total += parseFloat(i.value)||0; });
+  document.getElementById('totalDisplay').textContent = total.toLocaleString('en-IN');
+  document.getElementById('totalHidden').value = total;
+}
+recalc();
+</script>
+<%- include('layout-bottom') %>

@@ -1,0 +1,80 @@
+<%- include('layout-top') %>
+
+<div class="admin-page-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:14px;">
+  <div>
+    <h1>🧾 Receipt #<%= receipt.receiptNo %></h1>
+    <p><%= receipt.studentName %> · <%= receipt.date %></p>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <a href="/admin/management/receipts" class="admin-btn admin-btn-secondary">← Back</a>
+    <a href="/admin/management/receipts/<%= receipt._id %>/edit" class="admin-btn admin-btn-secondary">✏️ Edit</a>
+    <a href="/admin/management/receipts/<%= receipt._id %>/download" target="_blank" class="admin-btn admin-btn-primary">⬇️ Download PDF</a>
+  </div>
+</div>
+
+<div style="max-width:600px;background:white;border-radius:16px;border:1px solid #e2e8f0;overflow:hidden;box-shadow:0 2px 16px rgba(10,22,40,.06);">
+
+  <!-- Header -->
+  <div style="background:var(--navy);padding:18px 22px;border-bottom:3px solid var(--accent);">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+      <div>
+        <div style="font-family:'Space Mono',monospace;font-size:.62rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;">DTE CODE 2631 · MSBTE CODE 51305</div>
+        <div style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:900;color:white;">CASH RECEIPT</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-family:'Space Mono',monospace;font-size:.7rem;color:var(--accent);">Receipt No.</div>
+        <div style="font-size:1.6rem;font-weight:900;color:var(--accent);font-family:'Playfair Display',serif;">#<%= receipt.receiptNo %></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Student info -->
+  <div style="padding:16px 22px;border-bottom:1px solid #f1f5f9;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+    <div><div style="font-size:.68rem;color:var(--gray);font-family:'Space Mono',monospace;text-transform:uppercase;">Student</div><div style="font-weight:700;color:var(--navy);font-size:.9rem;"><%= receipt.studentName %></div></div>
+    <div><div style="font-size:.68rem;color:var(--gray);font-family:'Space Mono',monospace;text-transform:uppercase;">Date</div><div style="font-weight:600;color:var(--navy);font-size:.88rem;"><%= receipt.date %></div></div>
+    <div><div style="font-size:.68rem;color:var(--gray);font-family:'Space Mono',monospace;text-transform:uppercase;">Class</div><div style="font-weight:600;color:var(--navy);font-size:.88rem;"><%= receipt.className || '—' %></div></div>
+    <div><div style="font-size:.68rem;color:var(--gray);font-family:'Space Mono',monospace;text-transform:uppercase;">Course</div><div style="font-weight:600;color:var(--navy);font-size:.88rem;"><%= receipt.course || '—' %></div></div>
+    <div style="grid-column:1/3;"><div style="font-size:.68rem;color:var(--gray);font-family:'Space Mono',monospace;text-transform:uppercase;">Enrollment No.</div><div style="font-weight:600;color:var(--navy);font-size:.88rem;"><%= receipt.enrollmentNo || '—' %></div></div>
+  </div>
+
+  <!-- Fee table -->
+  <%
+  const feeFields = [
+    {label:'Tution Fees',key:'tuitionFees'},{label:'Development Fees',key:'developmentFees'},
+    {label:'Admission Fees',key:'admissionFees'},{label:'Library Deposit',key:'libraryDeposit'},
+    {label:'Library Fees',key:'libraryFees'},{label:'Laboratory Fees',key:'laboratoryFees'},
+    {label:'Gymkhana',key:'gymkhana'},{label:"Student's Council",key:'studentsCouncil'},
+    {label:'College Magazine',key:'collegeMagazine'},{label:'Identity Card & Insurance',key:'identityCardInsurance'},
+    {label:'Cultural Activities',key:'culturalActivities'},{label:"Student's Welfare",key:'studentsWelfare'},
+    {label:'Eligibility Fees/Enrollment Fees',key:'eligibilityFees'},{label:'MSBTE Exam/ University Fees',key:'msbteExamFees'},
+    {label:'Internet Fees',key:'internetFees'},{label:'Alumni Charges',key:'alumniCharges'},
+    {label:'T.C. Fees',key:'tcFees'},{label:'Fine',key:'fine'},
+    {label:'Bonafide Fees',key:'bonafideFees'},{label:'Other',key:'other'},
+  ];
+  const activeFees = feeFields.filter(f => receipt.fees && receipt.fees[f.key] > 0);
+  %>
+  <div style="padding:0;">
+    <% if (activeFees.length > 0) { %>
+      <% activeFees.forEach((f,i) => { %>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 22px;border-bottom:1px solid #f8fafc;background:<%= i%2===0?'white':'#fafbfc' %>;">
+          <span style="font-size:.84rem;color:var(--navy);"><%= f.label %></span>
+          <span style="font-family:'Space Mono',monospace;font-size:.84rem;font-weight:700;color:var(--navy);">₹<%= (receipt.fees[f.key]||0).toLocaleString('en-IN') %></span>
+        </div>
+      <% }) %>
+    <% } else { %>
+      <div style="padding:18px 22px;color:var(--gray);font-size:.84rem;text-align:center;">No fee amounts entered.</div>
+    <% } %>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 22px;background:var(--navy);border-top:2px solid var(--accent);">
+      <span style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:800;color:var(--accent);">Total</span>
+      <span style="font-family:'Space Mono',monospace;font-size:1.1rem;font-weight:900;color:var(--accent);">₹<%= (receipt.total||0).toLocaleString('en-IN') %></span>
+    </div>
+  </div>
+
+  <div style="padding:14px 22px;border-top:1px solid #f1f5f9;">
+    <div style="font-size:.7rem;color:var(--gray);font-family:'Space Mono',monospace;text-transform:uppercase;margin-bottom:4px;">Rs in Words</div>
+    <div style="font-size:.86rem;color:var(--navy);font-style:italic;"><%= receipt.amountInWords || '—' %></div>
+  </div>
+
+</div>
+
+<%- include('layout-bottom') %>

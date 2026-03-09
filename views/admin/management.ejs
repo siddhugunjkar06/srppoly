@@ -1,0 +1,109 @@
+<%- include('layout-top') %>
+
+<div class="admin-page-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;">
+  <div>
+    <h1>🏫 Management</h1>
+    <p>Generate and download Fee Receipts & Bonafide Certificates</p>
+  </div>
+</div>
+
+<!-- Stats row -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:28px;">
+  <div class="mgmt-stat-card" style="border-left:4px solid var(--accent);">
+    <div class="mgmt-stat-icon">🧾</div>
+    <div class="mgmt-stat-val"><%= totalReceipts %></div>
+    <div class="mgmt-stat-label">Total Receipts</div>
+  </div>
+  <div class="mgmt-stat-card" style="border-left:4px solid #1a5c1a;">
+    <div class="mgmt-stat-icon">📜</div>
+    <div class="mgmt-stat-val"><%= totalBonafides %></div>
+    <div class="mgmt-stat-label">Bonafide Certs</div>
+  </div>
+</div>
+
+<!-- Two columns -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+  <!-- Fee Receipts -->
+  <div class="mgmt-section">
+    <div class="mgmt-section-head">
+      <span class="mgmt-section-title">🧾 Fee Receipts</span>
+      <a href="/admin/management/receipts/new" class="admin-btn admin-btn-primary admin-btn-sm">+ New Receipt</a>
+    </div>
+    <% if (recentReceipts.length === 0) { %>
+      <div class="mgmt-empty">No receipts yet. Create one!</div>
+    <% } else { %>
+      <% recentReceipts.forEach(r => { %>
+        <div class="mgmt-list-item">
+          <div class="mgmt-item-left">
+            <span class="mgmt-item-num">#<%= r.receiptNo %></span>
+            <div>
+              <div class="mgmt-item-name"><%= r.studentName %></div>
+              <div class="mgmt-item-meta"><%= r.course %> · <%= r.date %> · ₹<%= (r.total||0).toLocaleString('en-IN') %></div>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <a href="/admin/management/receipts/<%= r._id %>/download" class="mgmt-dl-btn" title="Download PDF">⬇️</a>
+            <a href="/admin/management/receipts/<%= r._id %>" class="mgmt-view-btn">View</a>
+          </div>
+        </div>
+      <% }) %>
+    <% } %>
+    <a href="/admin/management/receipts" class="mgmt-view-all">View all receipts →</a>
+  </div>
+
+  <!-- Bonafide Certificates -->
+  <div class="mgmt-section">
+    <div class="mgmt-section-head">
+      <span class="mgmt-section-title">📜 Bonafide Certificates</span>
+      <a href="/admin/management/bonafides/new" class="admin-btn admin-btn-primary admin-btn-sm">+ New Certificate</a>
+    </div>
+    <% if (recentBonafides.length === 0) { %>
+      <div class="mgmt-empty">No bonafide certificates yet.</div>
+    <% } else { %>
+      <% recentBonafides.forEach(b => { %>
+        <div class="mgmt-list-item">
+          <div class="mgmt-item-left">
+            <span class="mgmt-item-num">#<%= b.serialNo %></span>
+            <div>
+              <div class="mgmt-item-name"><%= b.studentName %></div>
+              <div class="mgmt-item-meta"><%= b.yearOfStudy %> Year · <%= b.date %> · <%= b.course %></div>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <a href="/admin/management/bonafides/<%= b._id %>/download" class="mgmt-dl-btn" title="Download PDF">⬇️</a>
+            <a href="/admin/management/bonafides/<%= b._id %>" class="mgmt-view-btn">View</a>
+          </div>
+        </div>
+      <% }) %>
+    <% } %>
+    <a href="/admin/management/bonafides" class="mgmt-view-all">View all certificates →</a>
+  </div>
+
+</div>
+
+<style>
+.mgmt-stat-card{background:white;border-radius:14px;padding:18px 22px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 12px rgba(10,22,40,.06);border:1px solid #e2e8f0;}
+.mgmt-stat-icon{font-size:2rem;}
+.mgmt-stat-val{font-family:'Playfair Display',serif;font-size:2rem;font-weight:900;color:var(--navy);}
+.mgmt-stat-label{font-size:.74rem;color:var(--gray);font-family:'Space Mono',monospace;text-transform:uppercase;}
+.mgmt-section{background:white;border-radius:14px;border:1px solid #e2e8f0;overflow:hidden;box-shadow:0 2px 12px rgba(10,22,40,.05);}
+.mgmt-section-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #f1f5f9;}
+.mgmt-section-title{font-size:.95rem;font-weight:700;color:var(--navy);}
+.mgmt-empty{padding:24px;text-align:center;color:var(--gray);font-size:.84rem;}
+.mgmt-list-item{display:flex;align-items:center;justify-content:space-between;padding:11px 18px;border-bottom:1px solid #f8fafc;gap:10px;}
+.mgmt-list-item:last-of-type{border-bottom:none;}
+.mgmt-list-item:hover{background:#fafbfc;}
+.mgmt-item-left{display:flex;align-items:center;gap:10px;flex:1;min-width:0;}
+.mgmt-item-num{font-family:'Space Mono',monospace;font-size:.68rem;font-weight:700;color:white;background:var(--navy);border-radius:6px;padding:2px 7px;flex-shrink:0;}
+.mgmt-item-name{font-size:.86rem;font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mgmt-item-meta{font-size:.72rem;color:var(--gray);}
+.mgmt-dl-btn{padding:4px 9px;background:rgba(26,58,107,.07);border:1px solid rgba(26,58,107,.15);border-radius:7px;font-size:.82rem;text-decoration:none;transition:all .2s;}
+.mgmt-dl-btn:hover{background:var(--blue);color:white;}
+.mgmt-view-btn{padding:4px 10px;background:var(--navy);color:var(--accent);border-radius:7px;font-size:.74rem;font-weight:700;text-decoration:none;transition:all .2s;}
+.mgmt-view-btn:hover{background:var(--blue);}
+.mgmt-view-all{display:block;padding:10px 18px;font-size:.78rem;color:var(--blue);font-weight:600;text-decoration:none;border-top:1px solid #f1f5f9;}
+.mgmt-view-all:hover{color:var(--navy);}
+</style>
+
+<%- include('layout-bottom') %>

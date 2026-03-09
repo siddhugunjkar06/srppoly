@@ -11,6 +11,8 @@ const Syllabus   = require('../models/Syllabus');
 const LabManual        = require('../models/LabManual');
 const SubjectSyllabus  = require('../models/SubjectSyllabus');
 const { generateAdmissionReceipt } = require('../utils/generatePDF');
+const { generateFeeReceiptPDF, generateBonafidePDF, numberToWords } = require('../utils/managementPDF');
+const { FeeReceipt, Bonafide } = require('../models/Student');
 const { cloudinary, uploadFaculty, uploadGallery, uploadGrievancePDF, uploadSyllabusPDF, uploadSubjectSyllabusPDF, uploadLabManualPDF, destroyPDF } = require('../config/cloudinary');
 
 // ── Auth Middleware ────────────────────────────────────────────────────────
@@ -1150,5 +1152,298 @@ router.delete('/lab-manuals/:id', requireAuth, async (req, res) => {
     res.redirect('/admin/lab-manuals');
   }
 });
+
+
+// ══════════════════════════════════════════════════════════════════════════
+// ── MANAGEMENT (Fee Receipts + Bonafide Certificates) ────────────────────
+// ══════════════════════════════════════════════════════════════════════════
+
+// DASHBOARD
+router.get('/management', requireAuth, async (req, res) => {
+  try {
+    const [recentReceipts, recentBonafides, totalReceipts, totalBonafides] = await Promise.all([
+      FeeReceipt.find().sort({ createdAt: -1 }).limit(8).lean(),
+      Bonafide.find().sort({ createdAt: -1 }).limit(8).lean(),
+      FeeReceipt.countDocuments(),
+      Bonafide.countDocuments()
+    ]);
+    res.render('admin/management', {
+      title: 'Management — Admin',
+      recentReceipts, recentBonafides, totalReceipts, totalBonafides,
+      adminName: req.session.adminName
+    });
+  } catch (err) {
+    req.flash('error', 'Failed to load management data.');
+    res.redirect('/admin/dashboard');
+  }
+});
+
+// ── FEE RECEIPTS ──────────────────────────────────────────────────────────
+
+// LIST
+router.get('/management/receipts', requireAuth, async (req, res) => {
+  try {
+    const { q } = req.query;
+    const filter = q ? { studentName: { $regex: q, $options: 'i' } } : {};
+    const receipts = await FeeReceipt.find(filter).sort({ receiptNo: -1 }).lean();
+    res.render('admin/receipts', {
+      title: 'Fee Receipts — Admin',
+      receipts, q: q || '',
+      adminName: req.session.adminName
+    });
+  } catch (err) {
+    req.flash('error', 'Failed to load receipts.');
+    res.redirect('/admin/management');
+  }
+});
+
+// NEW FORM
+router.get('/management/receipts/new', requireAuth, (req, res) => {
+  res.render('admin/receipt-form', {
+    title: 'New Fee Receipt — Admin',
+    receipt: null,
+    adminName: req.session.adminName
+  });
+});
+
+// CREATE
+router.post('/management/receipts', requireAuth, async (req, res) => {
+  try {
+    const { date, studentName, className, course, enrollmentNo, amountInWords } = req.body;
+    // auto receipt number
+    const last = await FeeReceipt.findOne().sort({ receiptNo: -1 }).lean();
+    const receiptNo = last && last.receiptNo ? last.receiptNo + 1 : 1;
+
+    const feeKeys = ['tuitionFees','developmentFees','admissionFees','libraryDeposit',
+      'libraryFees','laboratoryFees','gymkhana','studentsCouncil','collegeMagazine',
+      'identityCardInsurance','culturalActivities','studentsWelfare','eligibilityFees',
+      'msbteExamFees','internetFees','alumniCharges','tcFees','fine','bonafideFees',
+      'other','extra1','extra2'];
+    const fees = {};
+    let total = 0;
+    feeKeys.forEach(k => {
+      const v = parseFloat(req.body[k]) || 0;
+      fees[k] = v;
+      total += v;
+    });
+
+    const r = await FeeReceipt.create({
+      receiptNo, date, studentName, className, course, enrollmentNo,
+      fees, total,
+      amountInWords: amountInWords || numberToWords(total)
+    });
+    req.flash('success', `Receipt #${receiptNo} created for ${studentName}.`);
+    res.redirect(`/admin/management/receipts/${r._id}`);
+  } catch (err) {
+    console.error(err);
+    req.flash('error', 'Failed to create receipt.');
+    res.redirect('/admin/management/receipts/new');
+  }
+});
+
+// VIEW + DOWNLOAD ACTIONS
+router.get('/management/receipts/:id', requireAuth, async (req, res) => {
+  try {
+    const receipt = await FeeReceipt.findById(req.params.id).lean();
+    if (!receipt) { req.flash('error', 'Receipt not found.'); return res.redirect('/admin/management/receipts'); }
+    res.render('admin/receipt-detail', {
+      title: `Receipt #${receipt.receiptNo} — Admin`,
+      receipt,
+      adminName: req.session.adminName
+    });
+  } catch (err) {
+    req.flash('error', 'Not found.'); res.redirect('/admin/management/receipts');
+  }
+});
+
+// DOWNLOAD PDF
+router.get('/management/receipts/:id/download', requireAuth, async (req, res) => {
+  try {
+    const receipt = await FeeReceipt.findById(req.params.id).lean();
+    if (!receipt) return res.status(404).send('Not found.');
+    generateFeeReceiptPDF(receipt, res);
+  } catch (err) {
+    res.status(500).send('PDF generation failed.');
+  }
+});
+
+// EDIT
+router.get('/management/receipts/:id/edit', requireAuth, async (req, res) => {
+  try {
+    const receipt = await FeeReceipt.findById(req.params.id).lean();
+    if (!receipt) { req.flash('error', 'Not found.'); return res.redirect('/admin/management/receipts'); }
+    res.render('admin/receipt-form', {
+      title: `Edit Receipt #${receipt.receiptNo} — Admin`,
+      receipt,
+      adminName: req.session.adminName
+    });
+  } catch (err) {
+    req.flash('error', 'Not found.'); res.redirect('/admin/management/receipts');
+  }
+});
+
+// UPDATE
+router.put('/management/receipts/:id', requireAuth, async (req, res) => {
+  try {
+    const { date, studentName, className, course, enrollmentNo, amountInWords } = req.body;
+    const feeKeys = ['tuitionFees','developmentFees','admissionFees','libraryDeposit',
+      'libraryFees','laboratoryFees','gymkhana','studentsCouncil','collegeMagazine',
+      'identityCardInsurance','culturalActivities','studentsWelfare','eligibilityFees',
+      'msbteExamFees','internetFees','alumniCharges','tcFees','fine','bonafideFees',
+      'other','extra1','extra2'];
+    const fees = {};
+    let total = 0;
+    feeKeys.forEach(k => {
+      const v = parseFloat(req.body[k]) || 0;
+      fees[k] = v; total += v;
+    });
+    await FeeReceipt.findByIdAndUpdate(req.params.id, {
+      date, studentName, className, course, enrollmentNo,
+      fees, total,
+      amountInWords: amountInWords || numberToWords(total),
+      updatedAt: Date.now()
+    });
+    req.flash('success', 'Receipt updated.');
+    res.redirect(`/admin/management/receipts/${req.params.id}`);
+  } catch (err) {
+    req.flash('error', 'Update failed.');
+    res.redirect(`/admin/management/receipts/${req.params.id}/edit`);
+  }
+});
+
+// DELETE
+router.delete('/management/receipts/:id', requireAuth, async (req, res) => {
+  try {
+    await FeeReceipt.findByIdAndDelete(req.params.id);
+    req.flash('success', 'Receipt deleted.');
+    res.redirect('/admin/management/receipts');
+  } catch (err) {
+    req.flash('error', 'Delete failed.');
+    res.redirect('/admin/management/receipts');
+  }
+});
+
+// ── BONAFIDE CERTIFICATES ─────────────────────────────────────────────────
+
+// LIST
+router.get('/management/bonafides', requireAuth, async (req, res) => {
+  try {
+    const { q } = req.query;
+    const filter = q ? { studentName: { $regex: q, $options: 'i' } } : {};
+    const bonafides = await Bonafide.find(filter).sort({ serialNo: -1 }).lean();
+    res.render('admin/bonafides', {
+      title: 'Bonafide Certificates — Admin',
+      bonafides, q: q || '',
+      adminName: req.session.adminName
+    });
+  } catch (err) {
+    req.flash('error', 'Failed to load.');
+    res.redirect('/admin/management');
+  }
+});
+
+// NEW FORM
+router.get('/management/bonafides/new', requireAuth, (req, res) => {
+  res.render('admin/bonafide-form', {
+    title: 'New Bonafide Certificate — Admin',
+    record: null,
+    adminName: req.session.adminName
+  });
+});
+
+// CREATE
+router.post('/management/bonafides', requireAuth, async (req, res) => {
+  try {
+    const last = await Bonafide.findOne().sort({ serialNo: -1 }).lean();
+    const serialNo = last && last.serialNo ? last.serialNo + 1 : 1;
+    const { date, studentName, yearOfStudy, course, academicYearFrom, academicYearTo,
+            dobDay, dobMonth, dobYear, issueDate, yearSuffix } = req.body;
+
+    const b = await Bonafide.create({
+      serialNo, yearSuffix: yearSuffix || new Date().getFullYear().toString().slice(-1),
+      date, studentName, yearOfStudy, course,
+      academicYearFrom, academicYearTo,
+      dobDay, dobMonth, dobYear, issueDate
+    });
+    req.flash('success', `Bonafide #${serialNo} created for ${studentName}.`);
+    res.redirect(`/admin/management/bonafides/${b._id}`);
+  } catch (err) {
+    console.error(err);
+    req.flash('error', 'Failed to create bonafide certificate.');
+    res.redirect('/admin/management/bonafides/new');
+  }
+});
+
+// VIEW
+router.get('/management/bonafides/:id', requireAuth, async (req, res) => {
+  try {
+    const record = await Bonafide.findById(req.params.id).lean();
+    if (!record) { req.flash('error', 'Not found.'); return res.redirect('/admin/management/bonafides'); }
+    res.render('admin/bonafide-detail', {
+      title: `Bonafide #${record.serialNo} — Admin`,
+      record,
+      adminName: req.session.adminName
+    });
+  } catch (err) {
+    req.flash('error', 'Not found.'); res.redirect('/admin/management/bonafides');
+  }
+});
+
+// DOWNLOAD PDF
+router.get('/management/bonafides/:id/download', requireAuth, async (req, res) => {
+  try {
+    const record = await Bonafide.findById(req.params.id).lean();
+    if (!record) return res.status(404).send('Not found.');
+    generateBonafidePDF(record, res);
+  } catch (err) {
+    res.status(500).send('PDF generation failed.');
+  }
+});
+
+// EDIT
+router.get('/management/bonafides/:id/edit', requireAuth, async (req, res) => {
+  try {
+    const record = await Bonafide.findById(req.params.id).lean();
+    if (!record) { req.flash('error', 'Not found.'); return res.redirect('/admin/management/bonafides'); }
+    res.render('admin/bonafide-form', {
+      title: `Edit Bonafide #${record.serialNo} — Admin`,
+      record,
+      adminName: req.session.adminName
+    });
+  } catch (err) {
+    req.flash('error', 'Not found.'); res.redirect('/admin/management/bonafides');
+  }
+});
+
+// UPDATE
+router.put('/management/bonafides/:id', requireAuth, async (req, res) => {
+  try {
+    const { date, studentName, yearOfStudy, course, academicYearFrom, academicYearTo,
+            dobDay, dobMonth, dobYear, issueDate, yearSuffix } = req.body;
+    await Bonafide.findByIdAndUpdate(req.params.id, {
+      yearSuffix, date, studentName, yearOfStudy, course,
+      academicYearFrom, academicYearTo, dobDay, dobMonth, dobYear, issueDate,
+      updatedAt: Date.now()
+    });
+    req.flash('success', 'Bonafide certificate updated.');
+    res.redirect(`/admin/management/bonafides/${req.params.id}`);
+  } catch (err) {
+    req.flash('error', 'Update failed.');
+    res.redirect(`/admin/management/bonafides/${req.params.id}/edit`);
+  }
+});
+
+// DELETE
+router.delete('/management/bonafides/:id', requireAuth, async (req, res) => {
+  try {
+    await Bonafide.findByIdAndDelete(req.params.id);
+    req.flash('success', 'Bonafide certificate deleted.');
+    res.redirect('/admin/management/bonafides');
+  } catch (err) {
+    req.flash('error', 'Delete failed.');
+    res.redirect('/admin/management/bonafides');
+  }
+});
+
 
 module.exports = router;

@@ -1,0 +1,127 @@
+<%- include('layout-top') %>
+<div class="admin-page-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;">
+  <div>
+    <h1><%= record ? `✏️ Edit Bonafide #${record.serialNo}` : '📜 New Bonafide Certificate' %></h1>
+    <p>Fills the official SRPP Bonafide format exactly</p>
+  </div>
+  <a href="/admin/management/bonafides" class="admin-btn admin-btn-secondary">← Back</a>
+</div>
+
+<div style="max-width:680px;">
+<form action="<%= record ? `/admin/management/bonafides/${record._id}?_method=PUT` : '/admin/management/bonafides' %>"
+      method="POST" id="bfForm">
+
+  <div class="admin-section">
+    <h2 class="admin-section-title">🔢 Certificate Identity</h2>
+    <div class="rf-grid3">
+      <div class="rf-field">
+        <label>Serial No. <span style="color:var(--gray);font-weight:400;font-size:.72rem;">(auto)</span></label>
+        <input type="text" value="<%= record ? `SRPPI/BONAFIDE/202${record.yearSuffix||''}/${record.serialNo}` : 'Auto-assigned' %>" disabled style="background:#f8fafc;color:var(--gray);">
+      </div>
+      <div class="rf-field">
+        <label>Year Suffix <span style="color:var(--gray);font-weight:400;font-size:.72rem;">(last digit of year)</span></label>
+        <input type="text" name="yearSuffix" maxlength="1" placeholder="e.g. 5 for 2025"
+          value="<%= record ? (record.yearSuffix||'') : new Date().getFullYear().toString().slice(-1) %>">
+      </div>
+      <div class="rf-field">
+        <label>Date of Issue <span class="req">*</span></label>
+        <input type="text" name="date" required placeholder="DD/MM/YYYY"
+          value="<%= record ? record.date : '' %>">
+      </div>
+    </div>
+  </div>
+
+  <div class="admin-section">
+    <h2 class="admin-section-title">🎓 Student Details</h2>
+    <div class="rf-grid3">
+      <div class="rf-field" style="grid-column:1/3;">
+        <label>Student Name <span class="req">*</span></label>
+        <input type="text" name="studentName" required placeholder="Full name as in records"
+          value="<%= record ? record.studentName : '' %>">
+      </div>
+      <div class="rf-field">
+        <label>Year of Study <span class="req">*</span></label>
+        <select name="yearOfStudy" required>
+          <option value="">Select</option>
+          <% ['I','II','III'].forEach(y => { %>
+            <option value="<%= y %>" <%= record && record.yearOfStudy===y ? 'selected' : '' %>><%= y %> Year</option>
+          <% }) %>
+        </select>
+      </div>
+    </div>
+    <div class="rf-field" style="margin-bottom:13px;">
+      <label>Course Name</label>
+      <input type="text" name="course" placeholder="e.g. Computer Engineering / Electrical Engineering"
+        value="<%= record ? (record.course||'') : '' %>">
+    </div>
+    <div class="rf-grid3">
+      <div class="rf-field">
+        <label>Academic Year From</label>
+        <input type="text" name="academicYearFrom" placeholder="e.g. 2024"
+          value="<%= record ? (record.academicYearFrom||'') : '' %>">
+      </div>
+      <div class="rf-field">
+        <label>Academic Year To</label>
+        <input type="text" name="academicYearTo" placeholder="e.g. 2025"
+          value="<%= record ? (record.academicYearTo||'') : '' %>">
+      </div>
+    </div>
+  </div>
+
+  <div class="admin-section">
+    <h2 class="admin-section-title">📅 Date of Birth</h2>
+    <div class="rf-grid3">
+      <div class="rf-field">
+        <label>Day</label>
+        <input type="text" name="dobDay" maxlength="2" placeholder="DD"
+          value="<%= record ? (record.dobDay||'') : '' %>">
+      </div>
+      <div class="rf-field">
+        <label>Month</label>
+        <input type="text" name="dobMonth" maxlength="2" placeholder="MM"
+          value="<%= record ? (record.dobMonth||'') : '' %>">
+      </div>
+      <div class="rf-field">
+        <label>Year</label>
+        <input type="text" name="dobYear" maxlength="4" placeholder="YYYY"
+          value="<%= record ? (record.dobYear||'') : '' %>">
+      </div>
+    </div>
+  </div>
+
+  <div class="admin-section">
+    <h2 class="admin-section-title">📋 Issue Date (bottom of certificate)</h2>
+    <div class="rf-field" style="max-width:200px;">
+      <label>Date</label>
+      <input type="text" name="issueDate" placeholder="DD/MM/YYYY"
+        value="<%= record ? (record.issueDate||'') : '' %>">
+    </div>
+  </div>
+
+  <div class="ss-actions">
+    <button type="submit" class="admin-btn admin-btn-primary" style="padding:12px 28px;">
+      <%= record ? '✅ Update Certificate' : '📜 Create Certificate' %>
+    </button>
+    <a href="/admin/management/bonafides" class="admin-btn admin-btn-secondary">Cancel</a>
+    <% if (record) { %>
+      <a href="/admin/management/bonafides/<%= record._id %>/download" class="admin-btn" style="background:#065f46;color:white;margin-left:auto;" target="_blank">⬇️ Download PDF</a>
+      <button type="button" class="admin-btn admin-btn-danger"
+        onclick="if(confirm('Delete this certificate?')) document.getElementById('bfDeleteForm').submit()">🗑️ Delete</button>
+    <% } %>
+  </div>
+</form>
+<% if (record) { %>
+  <form id="bfDeleteForm" action="/admin/management/bonafides/<%= record._id %>?_method=DELETE" method="POST"></form>
+<% } %>
+</div>
+
+<style>
+.rf-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px;margin-bottom:13px;}
+.rf-field{display:flex;flex-direction:column;gap:5px;}
+.rf-field label{font-size:.82rem;font-weight:700;color:var(--navy);}
+.rf-field input,.rf-field select{padding:9px 12px;border:2px solid #e2e8f0;border-radius:10px;font-size:.86rem;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;background:white;}
+.rf-field input:focus,.rf-field select:focus{border-color:var(--accent);}
+.req{color:#dc2626;}
+@media(max-width:600px){.rf-grid3{grid-template-columns:1fr;}}
+</style>
+<%- include('layout-bottom') %>

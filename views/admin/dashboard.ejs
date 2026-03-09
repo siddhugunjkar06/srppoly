@@ -73,6 +73,8 @@
     <a href="/admin/gallery/new" class="admin-btn admin-btn-primary">+ Upload Photos</a>
     <a href="/admin/enquiries" class="admin-btn admin-btn-secondary">View Enquiries</a>
     <a href="/admin/contacts" class="admin-btn admin-btn-secondary">View Messages</a>
+    <a href="/admin/management/receipts/new" class="admin-btn admin-btn-secondary">🧾 New Receipt</a>
+    <a href="/admin/management/bonafides/new" class="admin-btn admin-btn-secondary">📜 New Bonafide</a>
   </div>
 </div>
 
@@ -113,8 +115,8 @@
     <!-- Admin Info -->
     <div style="background:#f8fafc;border-radius:14px;padding:20px;border:1px solid #e2e8f0;">
       <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;">
-        <div style="width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;color:var(--accent);font-weight:900;font-family:'Playfair Display',serif;flex-shrink:0;">
-          <img src="/images/logobg.png" alt="SRPP Logo" style="height:60px;">
+        <div style="width:52px;height:52px;background:linear-gradient(135deg,var(--navy),var(--blue));border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;color:var(--accent);font-weight:900;font-family:'Playfair Display',serif;flex-shrink:0;">
+          <%= adminName ? adminName[0].toUpperCase() : 'A' %>
         </div>
         <div>
           <div style="font-weight:700;color:var(--navy);font-size:.95rem;"><%= adminName %></div>

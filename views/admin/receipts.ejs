@@ -1,0 +1,35 @@
+<%- include('layout-top') %>
+<div class="admin-page-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;">
+  <div><h1>🧾 Fee Receipts</h1><p><%= receipts.length %> records found</p></div>
+  <a href="/admin/management/receipts/new" class="admin-btn admin-btn-primary">+ New Receipt</a>
+</div>
+<form method="GET" style="margin-bottom:18px;display:flex;gap:10px;">
+  <input type="text" name="q" value="<%= q %>" placeholder="Search by student name..." style="flex:1;padding:9px 14px;border:2px solid #e2e8f0;border-radius:10px;font-size:.86rem;font-family:'DM Sans',sans-serif;outline:none;">
+  <button type="submit" class="admin-btn admin-btn-secondary">Search</button>
+  <% if (q) { %><a href="/admin/management/receipts" class="admin-btn admin-btn-secondary">Clear</a><% } %>
+</form>
+<div style="background:white;border-radius:14px;border:1px solid #e2e8f0;overflow:hidden;box-shadow:0 2px 12px rgba(10,22,40,.05);">
+  <div style="display:grid;grid-template-columns:60px 1fr 80px 100px 90px 120px;background:var(--navy);color:var(--accent);font-family:'Space Mono',monospace;font-size:.65rem;font-weight:700;text-transform:uppercase;padding:10px 18px;gap:8px;letter-spacing:.04em;">
+    <span>#</span><span>Student</span><span>Course</span><span>Date</span><span>Total</span><span>Actions</span>
+  </div>
+  <% if (receipts.length === 0) { %>
+    <div style="padding:36px;text-align:center;color:var(--gray);">No receipts found.</div>
+  <% } %>
+  <% receipts.forEach((r,i) => { %>
+    <div style="display:grid;grid-template-columns:60px 1fr 80px 100px 90px 120px;align-items:center;padding:10px 18px;border-bottom:1px solid #f8fafc;gap:8px;background:<%= i%2===0?'white':'#fafbfc' %>;">
+      <span style="font-family:'Space Mono',monospace;font-size:.72rem;font-weight:700;color:var(--navy);">#<%= r.receiptNo %></span>
+      <div>
+        <div style="font-size:.86rem;font-weight:600;color:var(--navy);"><%= r.studentName %></div>
+        <div style="font-size:.72rem;color:var(--gray);">Enroll: <%= r.enrollmentNo||'—' %></div>
+      </div>
+      <span style="font-size:.8rem;font-weight:700;color:var(--blue);"><%= r.course||'—' %></span>
+      <span style="font-size:.78rem;color:var(--gray);font-family:'Space Mono',monospace;"><%= r.date %></span>
+      <span style="font-family:'Space Mono',monospace;font-size:.8rem;font-weight:700;color:var(--navy);">₹<%= (r.total||0).toLocaleString('en-IN') %></span>
+      <div style="display:flex;gap:5px;">
+        <a href="/admin/management/receipts/<%= r._id %>" style="padding:3px 9px;background:var(--navy);color:var(--accent);border-radius:6px;font-size:.7rem;font-weight:700;text-decoration:none;">View</a>
+        <a href="/admin/management/receipts/<%= r._id %>/download" target="_blank" style="padding:3px 9px;background:rgba(6,95,70,.1);color:#065f46;border:1px solid rgba(6,95,70,.2);border-radius:6px;font-size:.7rem;font-weight:700;text-decoration:none;">⬇️ PDF</a>
+      </div>
+    </div>
+  <% }) %>
+</div>
+<%- include('layout-bottom') %>

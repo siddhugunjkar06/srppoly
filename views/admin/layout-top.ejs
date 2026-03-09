@@ -3,20 +3,117 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="SRPP Polytechnic Institute — Diploma Engineering admissions in Electrical, Computer, AI and Electronics. Parbhani, Maharashtra.">
-<meta name="keywords" content="polytechnic parbhani, diploma engineering maharashtra, MSBTE college parbhani">
 <title><%= title %></title>
-<link rel="icon" type="image/png" href="/images/logobg.png">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/admin.css">
+
+<!-- ── Auto-logout System ──────────────────────────────────────────────── -->
+
+<!-- Warning Modal -->
+<div id="autoLogoutOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:99999;align-items:center;justify-content:center;">
+  <div style="background:white;border-radius:20px;padding:40px;max-width:380px;width:90%;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,0.4);">
+    <div style="font-size:3rem;margin-bottom:12px;">⏰</div>
+    <h3 style="font-family:'Playfair Display',serif;color:#0a1628;margin-bottom:8px;font-size:1.3rem;">Session Expiring</h3>
+    <p style="color:#475569;font-size:.88rem;margin-bottom:20px;">You will be logged out in</p>
+    <div id="autoLogoutCountdown" style="font-family:'Space Mono',monospace;font-size:3rem;font-weight:700;color:#dc2626;margin-bottom:24px;line-height:1;">2:00</div>
+    <p style="color:#94a3b8;font-size:.76rem;margin-bottom:24px;">Move your mouse or press any key to stay logged in</p>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button onclick="resetAutoLogout()"
+        style="padding:12px 28px;background:linear-gradient(135deg,#d4a843,#f0c060);color:#0a1628;font-weight:700;border:none;border-radius:10px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.9rem;">
+        ✅ Stay Logged In
+      </button>
+      <button onclick="doLogout()"
+        style="padding:12px 20px;background:#fee2e2;color:#991b1b;font-weight:700;border:1px solid #fca5a5;border-radius:10px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.9rem;">
+        Logout Now
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const TIMEOUT_MS    = 30 * 60 * 1000;  // 30 minutes — must match server
+  const WARN_BEFORE   =  2 * 60 * 1000;  // warn 2 minutes before
+  const TICK_INTERVAL = 1000;
+
+  let logoutTimer, warnTimer, countdownTimer;
+  let countdownSecs = 120;
+  const overlay     = document.getElementById('autoLogoutOverlay');
+  const countdownEl = document.getElementById('autoLogoutCountdown');
+
+  function fmt(secs) {
+    const m = Math.floor(secs / 60).toString();
+    const s = (secs % 60).toString().padStart(2, '0');
+    return m + ':' + s;
+  }
+
+  function showWarning() {
+    countdownSecs = Math.floor(WARN_BEFORE / 1000);
+    overlay.style.display = 'flex';
+    countdownEl.textContent = fmt(countdownSecs);
+    countdownTimer = setInterval(() => {
+      countdownSecs--;
+      countdownEl.textContent = fmt(countdownSecs);
+      if (countdownSecs <= 10) countdownEl.style.color = '#dc2626';
+      if (countdownSecs <= 0)  doLogout();
+    }, TICK_INTERVAL);
+  }
+
+  function hideWarning() {
+    clearInterval(countdownTimer);
+    overlay.style.display = 'none';
+    countdownEl.style.color = '#dc2626';
+  }
+
+  function doLogout() {
+    clearAll();
+    window.location.href = '/admin/logout';
+  }
+
+  function clearAll() {
+    clearTimeout(logoutTimer);
+    clearTimeout(warnTimer);
+    clearInterval(countdownTimer);
+    hideWarning();
+  }
+
+  window.resetAutoLogout = function() {
+    clearAll();
+    startTimers();
+    // Ping server to refresh session
+    fetch('/admin/ping', { method: 'POST', credentials: 'same-origin' }).catch(() => {});
+  };
+
+  window.doLogout = doLogout;
+
+  function startTimers() {
+    warnTimer   = setTimeout(showWarning, TIMEOUT_MS - WARN_BEFORE);
+    logoutTimer = setTimeout(doLogout,    TIMEOUT_MS);
+  }
+
+  // Reset on any user activity
+  let activityThrottle;
+  function onActivity() {
+    clearTimeout(activityThrottle);
+    activityThrottle = setTimeout(() => {
+      if (overlay.style.display === 'none') resetAutoLogout();
+    }, 500);
+  }
+
+  ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart', 'click']
+    .forEach(ev => document.addEventListener(ev, onActivity, { passive: true }));
+
+  startTimers();
+})();
+</script>
+
 </head>
 <body class="admin-body">
 <div class="admin-layout">
   <!-- Sidebar -->
   <aside class="admin-sidebar">
     <div class="sidebar-logo">
-      <div class="logo-icon" style="width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--navy);font-weight:900;"><img src="/images/logobg.png" alt="SRPP Logo" style="height:60px;"></div>
+      <div class="logo-icon" style="width:44px;height:44px;background:linear-gradient(135deg,var(--accent),var(--gold));border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--navy);font-weight:900;">SR</div>
       <div>
         <div style="font-family:'Playfair Display',serif;font-size:.9rem;color:white;font-weight:700;">SRPP Admin</div>
         <div style="font-size:.65rem;color:rgba(255,255,255,.4);font-family:'Space Mono',monospace;">Welcome, <%= adminName %></div>
@@ -30,8 +127,8 @@
       <a href="/admin/faculty" class="sidebar-link <%= currentPath.startsWith('/admin/faculty') ? 'active' : '' %>">👨‍🏫 Faculty</a>
       <a href="/admin/gallery" class="sidebar-link <%= currentPath.startsWith('/admin/gallery') ? 'active' : '' %>">🖼️ Gallery</a>
       <a href="/admin/grievances" class="sidebar-link <%= currentPath.startsWith('/admin/grievances') ? 'active' : '' %>">⚖️ Grievances</a>
-      <a href="/admin/syllabus"   class="sidebar-link <%= currentPath.startsWith('/admin/syllabus')   ? 'active' : '' %>">📚 Syllabus</a>
       <a href="/admin/lab-manuals" class="sidebar-link <%= currentPath.startsWith('/admin/lab-manuals') ? 'active' : '' %>">🔬 Lab Manuals</a>
+      <a href="/admin/management" class="sidebar-link <%= currentPath.startsWith('/admin/management') ? 'active' : '' %>" style="margin-top:8px;border-top:1px solid rgba(255,255,255,.1);padding-top:12px;">🏫 Management</a>
       <hr style="border:none;border-top:1px solid rgba(255,255,255,.1);margin:12px 0;">
       <a href="/" class="sidebar-link">🌐 View Website</a>
       <a href="/admin/logout" class="sidebar-link" style="color:rgba(255,100,100,.7);">🚪 Logout</a>
