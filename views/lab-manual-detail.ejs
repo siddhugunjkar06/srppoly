@@ -147,7 +147,7 @@
 <!-- ── OTHER SEMESTERS ── -->
 <section style="background:white;padding:44px 0;">
   <div class="section-inner">
-    <h3 style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--navy);margin-bottom:20px;text-align:center;">
+    <h3 style="font-family:'DM Sans', sans-serif;font-size:1.2rem;color:var(--navy);margin-bottom:20px;text-align:center;">
       Other Semesters — Lab Manuals
     </h3>
     <div class="lmd-other-sems">
@@ -158,8 +158,8 @@
         <a href="/departments/<%= slug %>/lab-manuals/<%= s %>"
            class="lmd-other-sem-card <%= s===semester?'lmd-other-current':'' %>">
           <div class="lmd-osem-num" style="background:<%= s===semester ? cfg.color : 'var(--light)' %>">
-            <span style="font-family:'Space Mono',monospace;font-size:.6rem;color:<%= s===semester?'rgba(255,255,255,.6)':'var(--gray)' %>">SEM</span>
-            <span style="font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:900;color:<%= s===semester?'var(--accent)':'var(--navy)' %>"><%= s %></span>
+            <span style="font-family:'DM Sans', sans-serif;font-size:.6rem;color:<%= s===semester?'rgba(255,255,255,.6)':'var(--gray)' %>">SEM</span>
+            <span style="font-family:'DM Sans', sans-serif;font-size:1.5rem;font-weight:900;color:<%= s===semester?'var(--accent)':'var(--navy)' %>"><%= s %></span>
           </div>
           <div>
             <div style="font-size:.82rem;font-weight:700;color:var(--navy);"><%= yl %></div>
@@ -182,7 +182,7 @@
 .lmd-hero-glow { position:absolute; top:-60px; right:-60px; width:400px; height:400px; border-radius:50%; background:radial-gradient(circle,rgba(255,255,255,.07),transparent 70%); pointer-events:none; }
 .lmd-hero-inner { display:grid; grid-template-columns:1fr auto; gap:36px; align-items:center; }
 .lmd-hero-icon  { font-size:3rem; margin-bottom:12px; }
-.lmd-hero-title { font-family:'Playfair Display',serif; font-size:2.5rem; font-weight:900; color:white; line-height:1.2; margin-bottom:12px; }
+.lmd-hero-title { font-family:'DM Sans', sans-serif; font-size:2.5rem; font-weight:900; color:white; line-height:1.2; margin-bottom:12px; }
 .lmd-hero-desc  { font-size:.95rem; color:rgba(255,255,255,.75); line-height:1.8; max-width:520px; margin-bottom:18px; }
 .lmd-hero-chips { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:22px; }
 .lmd-chip { background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2); color:white; font-size:.75rem; font-weight:600; padding:5px 13px; border-radius:50px; }
@@ -194,13 +194,13 @@
 
 /* Nav card */
 .lmd-nav-card { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.15); backdrop-filter:blur(8px); border-radius:18px; padding:20px; min-width:200px; }
-.lmd-nav-title { font-family:'Space Mono',monospace; font-size:.62rem; font-weight:700; color:rgba(255,255,255,.5); text-transform:uppercase; letter-spacing:.08em; margin-bottom:14px; }
+.lmd-nav-title { font-family:'DM Sans', sans-serif; font-size:.62rem; font-weight:700; color:rgba(255,255,255,.5); text-transform:uppercase; letter-spacing:.08em; margin-bottom:14px; }
 .lmd-nav-grid  { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px; }
 .lmd-nav-btn   { display:flex; flex-direction:column; align-items:center; padding:8px 4px; border-radius:10px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.1); text-decoration:none; transition:all .2s; }
 .lmd-nav-btn:hover { background:rgba(255,255,255,.18); }
 .lmd-nav-active { background:rgba(212,168,67,.25)!important; border-color:var(--accent)!important; }
-.lmd-nav-sem   { font-family:'Space Mono',monospace; font-size:.52rem; color:rgba(255,255,255,.5); text-transform:uppercase; }
-.lmd-nav-num   { font-family:'Playfair Display',serif; font-size:1.3rem; font-weight:900; color:var(--accent); line-height:1; }
+.lmd-nav-sem   { font-family:'DM Sans', sans-serif; font-size:.52rem; color:rgba(255,255,255,.5); text-transform:uppercase; }
+.lmd-nav-num   { font-family:'DM Sans', sans-serif; font-size:1.3rem; font-weight:900; color:var(--accent); line-height:1; }
 .lmd-dept-link { display:block; text-align:center; color:rgba(255,255,255,.6); font-size:.75rem; font-weight:600; text-decoration:none; }
 .lmd-dept-link:hover { color:var(--accent); }
 
@@ -222,13 +222,13 @@
 .lmd-subject-card:hover { border-color:var(--accent); box-shadow:0 8px 28px rgba(10,22,40,.1); transform:translateY(-3px); }
 
 .lmd-card-stripe { display:flex; align-items:center; gap:8px; padding:10px 16px; }
-.lmd-card-num    { font-family:'Playfair Display',serif; font-size:1.4rem; font-weight:900; color:var(--accent); line-height:1; }
+.lmd-card-num    { font-family:'DM Sans', sans-serif; font-size:1.4rem; font-weight:900; color:var(--accent); line-height:1; }
 .lmd-card-code   { background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.2); border-radius:6px; padding:2px 8px; font-family:'Space Mono',monospace; font-size:.65rem; color:white; font-weight:700; margin-left:4px; }
 .lmd-card-year   { font-size:.65rem; color:rgba(255,255,255,.55); margin-left:auto; font-family:'Space Mono',monospace; }
 
 .lmd-card-body   { padding:16px 18px 12px; flex:1; }
 .lmd-card-icon   { font-size:1.8rem; margin-bottom:10px; }
-.lmd-card-title  { font-family:'Playfair Display',serif; font-size:1rem; font-weight:800; color:var(--navy); line-height:1.35; margin-bottom:6px; }
+.lmd-card-title  { font-family:'DM Sans', sans-serif; font-size:1rem; font-weight:800; color:var(--navy); line-height:1.35; margin-bottom:6px; }
 .lmd-card-desc   { font-size:.8rem; color:var(--gray); line-height:1.6; margin:0; }
 
 .lmd-card-footer { padding:12px 18px 16px; border-top:1px solid #f1f5f9; display:flex; align-items:center; gap:10px; }
@@ -245,7 +245,7 @@
 
 /* ══ EMPTY ═══════════════════════════════════════════════════ */
 .lmd-empty { text-align:center; background:white; border:2px dashed #e2e8f0; border-radius:16px; padding:60px 24px; max-width:480px; margin:0 auto; }
-.lmd-empty h2 { font-family:'Playfair Display',serif; color:var(--navy); margin-bottom:10px; }
+.lmd-empty h2 { font-family:'DM Sans', sans-serif; color:var(--navy); margin-bottom:10px; }
 .lmd-empty p  { color:var(--gray); font-size:.9rem; line-height:1.7; }
 
 /* ══ OTHER SEMS ══════════════════════════════════════════════ */

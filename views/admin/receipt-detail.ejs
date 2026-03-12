@@ -18,11 +18,11 @@
   <div style="background:var(--navy);padding:18px 22px;border-bottom:3px solid var(--accent);">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
       <div>
-        <div style="font-family:'Space Mono',monospace;font-size:.62rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;">DTE CODE 2631 · MSBTE CODE 51305</div>
-        <div style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:900;color:white;">CASH RECEIPT</div>
+        <div style="font-family:'DM Sans', sans-serif;font-size:.62rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;">DTE CODE 2631 · MSBTE CODE 51305</div>
+        <div style="font-family:'DM Sans', sans-serif;font-size:1.1rem;font-weight:900;color:white;">CASH RECEIPT</div>
       </div>
       <div style="text-align:right;">
-        <div style="font-family:'Space Mono',monospace;font-size:.7rem;color:var(--accent);">Receipt No.</div>
+        <div style="font-family:'DM Sans', sans-serif;font-size:.7rem;color:var(--accent);">Receipt No.</div>
         <div style="font-size:1.6rem;font-weight:900;color:var(--accent);font-family:'Playfair Display',serif;">#<%= receipt.receiptNo %></div>
       </div>
     </div>
@@ -58,15 +58,15 @@
       <% activeFees.forEach((f,i) => { %>
         <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 22px;border-bottom:1px solid #f8fafc;background:<%= i%2===0?'white':'#fafbfc' %>;">
           <span style="font-size:.84rem;color:var(--navy);"><%= f.label %></span>
-          <span style="font-family:'Space Mono',monospace;font-size:.84rem;font-weight:700;color:var(--navy);">₹<%= (receipt.fees[f.key]||0).toLocaleString('en-IN') %></span>
+          <span style="font-family:'DM Sans', sans-serif;font-size:.84rem;font-weight:700;color:var(--navy);">₹<%= (receipt.fees[f.key]||0).toLocaleString('en-IN') %></span>
         </div>
       <% }) %>
     <% } else { %>
       <div style="padding:18px 22px;color:var(--gray);font-size:.84rem;text-align:center;">No fee amounts entered.</div>
     <% } %>
     <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 22px;background:var(--navy);border-top:2px solid var(--accent);">
-      <span style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:800;color:var(--accent);">Total</span>
-      <span style="font-family:'Space Mono',monospace;font-size:1.1rem;font-weight:900;color:var(--accent);">₹<%= (receipt.total||0).toLocaleString('en-IN') %></span>
+      <span style="font-family:'DM Sans', sans-serif;font-size:1rem;font-weight:800;color:var(--accent);">Total</span>
+      <span style="font-family:'DM Sans', sans-serif;font-size:1.1rem;font-weight:900;color:var(--accent);">₹<%= (receipt.total||0).toLocaleString('en-IN') %></span>
     </div>
   </div>
 

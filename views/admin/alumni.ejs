@@ -10,7 +10,7 @@
 
 <!-- Filters -->
 <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center;">
-  <span style="font-size:.72rem;font-weight:700;color:var(--gray);font-family:'Space Mono',monospace;">DEPT:</span>
+  <span style="font-size:.72rem;font-weight:700;color:var(--gray);font-family:'DM Sans', sans-serif;">DEPT:</span>
   <% ['All',...ALUMNI_DEPTS].forEach(d => { %>
     <a href="/admin/alumni?dept=<%= encodeURIComponent(d) %>&year=<%= activeYear %>"
        class="syl-tab <%= activeDept===d?'syl-tab-active':'' %>">
@@ -19,7 +19,7 @@
   <% }) %>
 </div>
 <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:24px;align-items:center;">
-  <span style="font-size:.72rem;font-weight:700;color:var(--gray);font-family:'Space Mono',monospace;">YEAR:</span>
+  <span style="font-size:.72rem;font-weight:700;color:var(--gray);font-family:'DM Sans', sans-serif;">YEAR:</span>
   <a href="/admin/alumni?dept=<%= encodeURIComponent(activeDept) %>&year=All"
      class="syl-sem-tab <%= activeYear==='All'?'syl-sem-tab-active':'' %>">All Years</a>
   <% years.forEach(y => { %>
@@ -43,7 +43,7 @@
     <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 22px;background:linear-gradient(135deg,var(--navy),var(--blue));flex-wrap:wrap;gap:10px;">
       <div style="display:flex;align-items:center;gap:12px;">
         <div style="background:rgba(212,168,67,.2);border:1px solid rgba(212,168,67,.4);border-radius:10px;padding:6px 14px;">
-          <span style="font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:900;color:var(--accent);"><%= year %></span>
+          <span style="font-family:'DM Sans', sans-serif;font-size:1.4rem;font-weight:900;color:var(--accent);"><%= year %></span>
         </div>
         <div>
           <div style="font-size:.82rem;font-weight:700;color:white;">Pass Out Batch</div>
@@ -63,7 +63,7 @@
             <% const deptIcons = {'Electrical Engineering':'⚡','Computer Engineering':'💻','AI & Machine Learning':'🤖','Electronics & Communication':'📡'}; %>
             <%= deptIcons[dept]||'📚' %> <%= dept %>
           </span>
-          <span style="font-family:'Space Mono',monospace;font-size:.65rem;color:var(--gray);"><%= grouped[year][dept].length %> / 5 shown</span>
+          <span style="font-family:'DM Sans', sans-serif;font-size:.65rem;color:var(--gray);"><%= grouped[year][dept].length %> / 5 shown</span>
         </div>
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0;">
           <% grouped[year][dept].forEach((a,i) => { %>
@@ -73,7 +73,7 @@
                 <% if (a.imageUrl) { %>
                   <img src="<%= a.imageUrl %>" alt="<%= a.name %>" style="width:100%;height:100%;object-fit:cover;">
                 <% } else { %>
-                  <span style="font-size:1.1rem;font-weight:700;color:var(--accent);font-family:'Playfair Display',serif;"><%= a.name.charAt(0) %></span>
+                  <span style="font-size:1.1rem;font-weight:700;color:var(--accent);font-family:'DM Sans', sans-serif;"><%= a.name.charAt(0) %></span>
                 <% } %>
               </div>
               <!-- Info -->

@@ -17,7 +17,7 @@
   <% } %>
   <% bonafides.forEach((b,i) => { %>
     <div style="display:grid;grid-template-columns:80px 1fr 80px 100px 100px 130px;align-items:center;padding:10px 18px;border-bottom:1px solid #f8fafc;gap:8px;background:<%= i%2===0?'white':'#fafbfc' %>;">
-      <span style="font-family:'Space Mono',monospace;font-size:.68rem;font-weight:700;color:var(--navy);">#<%= b.serialNo %></span>
+      <span style="font-family:'DM Sans', sans-serif;font-size:.68rem;font-weight:700;color:var(--navy);">#<%= b.serialNo %></span>
       <div>
         <div style="font-size:.86rem;font-weight:600;color:var(--navy);"><%= b.studentName %></div>
         <div style="font-size:.7rem;color:var(--gray);">Acad: <%= b.academicYearFrom ? `20${b.academicYearFrom.slice(-2)}-20${b.academicYearTo.slice(-2)}` : '—' %></div>

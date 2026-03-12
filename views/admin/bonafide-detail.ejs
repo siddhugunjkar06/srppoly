@@ -13,9 +13,9 @@
 
 <div style="max-width:520px;background:white;border-radius:16px;border:1px solid #e2e8f0;overflow:hidden;box-shadow:0 2px 16px rgba(10,22,40,.06);">
   <div style="background:linear-gradient(135deg,#5c1a5c,#3b0d3b);padding:18px 22px;">
-    <div style="font-family:'Space Mono',monospace;font-size:.6rem;color:rgba(255,255,255,.5);text-transform:uppercase;margin-bottom:4px;">P.G.V.M.Va S.M. · DTE CODE 2631</div>
-    <div style="font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:900;color:white;margin-bottom:2px;">Bonafide Certificate</div>
-    <div style="font-family:'Space Mono',monospace;font-size:.7rem;color:#d8b4fe;">SRPPI/BONAFIDE/202<%= record.yearSuffix||'' %>/<%= record.serialNo %></div>
+    <div style="font-family:'DM Sans', sans-serif;font-size:.6rem;color:rgba(255,255,255,.5);text-transform:uppercase;margin-bottom:4px;">P.G.V.M.Va S.M. · DTE CODE 2631</div>
+    <div style="font-family:'DM Sans', sans-serif;font-size:1.2rem;font-weight:900;color:white;margin-bottom:2px;">Bonafide Certificate</div>
+    <div style="font-family:'DM Sans', sans-serif;font-size:.7rem;color:#d8b4fe;">SRPPI/BONAFIDE/202<%= record.yearSuffix||'' %>/<%= record.serialNo %></div>
   </div>
   <div style="padding:18px 22px;display:flex;flex-direction:column;gap:12px;">
     <% const rows = [
@@ -28,7 +28,7 @@
     ]; %>
     <% rows.forEach(r => { %>
       <div style="display:flex;gap:12px;padding-bottom:10px;border-bottom:1px solid #f1f5f9;">
-        <div style="width:130px;flex-shrink:0;font-size:.72rem;color:var(--gray);font-family:'Space Mono',monospace;text-transform:uppercase;padding-top:2px;"><%= r.label %></div>
+        <div style="width:130px;flex-shrink:0;font-size:.72rem;color:var(--gray);font-family:'DM Sans', sans-serif;text-transform:uppercase;padding-top:2px;"><%= r.label %></div>
         <div style="font-size:.9rem;font-weight:600;color:var(--navy);"><%= r.val %></div>
       </div>
     <% }) %>

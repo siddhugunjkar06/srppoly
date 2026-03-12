@@ -102,7 +102,7 @@
       <% }) %>
       <div class="rf-fee-total-row">
         <span></span><span style="font-weight:800;text-align:right;">Total ₹</span>
-        <span id="totalDisplay" style="font-family:'Space Mono',monospace;font-weight:900;color:var(--navy);">
+        <span id="totalDisplay" style="font-family:'DM Sans', sans-serif;font-weight:900;color:var(--navy);">
           <%= receipt ? (receipt.total||0).toLocaleString('en-IN') : '0' %>
         </span>
       </div>
@@ -146,12 +146,12 @@
 .rf-field input:focus,.rf-field select:focus{border-color:var(--accent);}
 .req{color:#dc2626;}
 .rf-fee-table{border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;}
-.rf-fee-header{display:grid;grid-template-columns:44px 1fr 110px;background:var(--navy);color:var(--accent);font-family:'Space Mono',monospace;font-size:.68rem;font-weight:700;text-transform:uppercase;padding:8px 12px;gap:8px;}
+.rf-fee-header{display:grid;grid-template-columns:44px 1fr 110px;background:var(--navy);color:var(--accent);font-family:'DM Sans', sans-serif;font-size:.68rem;font-weight:700;text-transform:uppercase;padding:8px 12px;gap:8px;}
 .rf-fee-row{display:grid;grid-template-columns:44px 1fr 110px;align-items:center;padding:5px 12px;border-bottom:1px solid #f1f5f9;gap:8px;transition:background .15s;}
 .rf-fee-row:hover{background:#fafbfc;}
-.rf-fee-sr{font-family:'Space Mono',monospace;font-size:.7rem;font-weight:700;color:var(--gray);text-align:center;}
+.rf-fee-sr{font-family:'DM Sans', sans-serif;font-size:.7rem;font-weight:700;color:var(--gray);text-align:center;}
 .rf-fee-label{font-size:.82rem;color:var(--navy);}
-.rf-fee-input{padding:4px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:.84rem;font-family:'Space Mono',monospace;text-align:right;width:100%;outline:none;transition:border-color .15s;}
+.rf-fee-input{padding:4px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:.84rem;font-family:'DM Sans', sans-serif;text-align:right;width:100%;outline:none;transition:border-color .15s;}
 .rf-fee-input:focus{border-color:var(--accent);background:#fffbf0;}
 .rf-fee-total-row{display:grid;grid-template-columns:44px 1fr 110px;align-items:center;padding:8px 12px;background:#f8fafc;border-top:2px solid #e2e8f0;gap:8px;font-size:.9rem;}
 @media(max-width:600px){.rf-grid3{grid-template-columns:1fr;}}
